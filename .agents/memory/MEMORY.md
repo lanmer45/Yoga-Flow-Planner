@@ -1,1 +1,1 @@
-- [API codegen workflow](api-codegen.md) — adding an API endpoint requires editing openapi.yaml then running codegen; zod + react-query clients are generated, not hand-written.
+- [Flow Planner API + codegen](flow-planner-api.md) — openapi→codegen→restart flow; poses support PUT update; built-in pose edits are global by design.

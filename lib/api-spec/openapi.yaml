@@ -63,6 +63,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Pose"
+  /poses/{id}:
+    put:
+      operationId: updatePose
+      tags: [poses]
+      summary: Update an existing pose in the pose bank
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PoseInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pose"
+        "404":
+          description: Pose not found
   /tag-labels:
     get:
       operationId: listTags

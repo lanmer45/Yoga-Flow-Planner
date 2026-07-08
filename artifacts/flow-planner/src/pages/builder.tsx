@@ -10,7 +10,8 @@ import {
   useCreateRoutine,
   useUpdateRoutine,
   useCreateTag,
-  useCreatePose
+  useCreatePose,
+  useUpdatePose
 } from "@workspace/api-client-react";
 import type { PoseInputCategory, PoseInputDurationType, PoseInputCautionsItem } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -58,6 +59,7 @@ export default function Builder() {
   const updateRoutine = useUpdateRoutine();
   const createTag = useCreateTag();
   const createPose = useCreatePose();
+  const updatePose = useUpdatePose();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -82,6 +84,7 @@ export default function Builder() {
   const [activeSection, setActiveSection] = useState<"centering"|"flow"|"closing" | null>(null);
   
   const [isPoseDialogOpen, setIsPoseDialogOpen] = useState(false);
+  const [editingPoseId, setEditingPoseId] = useState<number | null>(null);
   const [newPose, setNewPose] = useState({
     name: "",
     category: "Centering" as PoseInputCategory,
@@ -161,7 +164,45 @@ export default function Builder() {
     );
   };
 
-  const handleCreatePose = () => {
+  const resetPoseForm = () => {
+    setEditingPoseId(null);
+    setNewPose({
+      name: "",
+      category: "Centering" as PoseInputCategory,
+      durationType: "time" as PoseInputDurationType,
+      defaultDurationSeconds: 30,
+      defaultBreaths: 5,
+      perSide: false,
+      cue: "",
+      cautions: [],
+      modification: "",
+      chairOption: ""
+    });
+  };
+
+  const openCreatePose = () => {
+    resetPoseForm();
+    setIsPoseDialogOpen(true);
+  };
+
+  const openEditPose = (pose: any) => {
+    setEditingPoseId(pose.id);
+    setNewPose({
+      name: pose.name,
+      category: pose.category,
+      durationType: pose.durationType,
+      defaultDurationSeconds: pose.defaultDurationSeconds,
+      defaultBreaths: pose.defaultBreaths ?? 5,
+      perSide: pose.perSide,
+      cue: pose.cue ?? "",
+      cautions: [...pose.cautions],
+      modification: pose.modification ?? "",
+      chairOption: pose.chairOption ?? ""
+    });
+    setIsPoseDialogOpen(true);
+  };
+
+  const handleSavePose = () => {
     if (!newPose.name.trim()) return alert("Name is required");
     
     const payload = {
@@ -169,24 +210,17 @@ export default function Builder() {
       defaultBreaths: newPose.durationType === 'breaths' ? newPose.defaultBreaths : null
     };
 
-    createPose.mutate({ data: payload }, {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListPosesQueryKey() });
-        setIsPoseDialogOpen(false);
-        setNewPose({
-          name: "",
-          category: "Centering" as PoseInputCategory,
-          durationType: "time" as PoseInputDurationType,
-          defaultDurationSeconds: 30,
-          defaultBreaths: 5,
-          perSide: false,
-          cue: "",
-          cautions: [],
-          modification: "",
-          chairOption: ""
-        });
-      }
-    });
+    const onSuccess = () => {
+      queryClient.invalidateQueries({ queryKey: getListPosesQueryKey() });
+      setIsPoseDialogOpen(false);
+      resetPoseForm();
+    };
+
+    if (editingPoseId != null) {
+      updatePose.mutate({ id: editingPoseId, data: payload }, { onSuccess });
+    } else {
+      createPose.mutate({ data: payload }, { onSuccess });
+    }
   };
 
   const addPose = (pose: any) => {
@@ -297,7 +331,7 @@ export default function Builder() {
               <SheetHeader className="px-4 pb-2 text-left shrink-0">
                 <div className="flex items-center justify-between">
                   <SheetTitle>Pose Bank</SheetTitle>
-                  <Button variant="outline" size="sm" onClick={() => setIsPoseDialogOpen(true)}>
+                  <Button variant="outline" size="sm" onClick={openCreatePose}>
                     Create Pose
                   </Button>
                 </div>
@@ -359,9 +393,17 @@ export default function Builder() {
                       className="p-3 border rounded-lg hover:border-primary cursor-pointer transition-colors bg-card"
                       onClick={() => addPose(pose)}
                     >
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-start gap-2">
                         <div className="font-medium text-foreground">{pose.name}</div>
-                        <Badge variant="outline" className="text-[10px]">{pose.category}</Badge>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Badge variant="outline" className="text-[10px]">{pose.category}</Badge>
+                          <button
+                            onClick={(ev) => { ev.stopPropagation(); openEditPose(pose); }}
+                            className="text-[11px] font-medium text-secondary hover:underline"
+                          >
+                            Edit
+                          </button>
+                        </div>
                       </div>
                       <div className="text-xs text-muted-foreground mt-1 line-clamp-1">{pose.cue}</div>
                       {pose.modification && (
@@ -522,10 +564,13 @@ export default function Builder() {
       {renderSectionBuilder("flow", "Flow")}
       {renderSectionBuilder("closing", "Closing")}
 
-      <Dialog open={isPoseDialogOpen} onOpenChange={setIsPoseDialogOpen}>
+      <Dialog open={isPoseDialogOpen} onOpenChange={(open) => { setIsPoseDialogOpen(open); if (!open) resetPoseForm(); }}>
         <DialogContent className="max-h-[90vh] overflow-hidden flex flex-col p-0">
           <DialogHeader className="px-4 pt-4 shrink-0">
-            <DialogTitle>Add Custom Pose</DialogTitle>
+            <DialogTitle>{editingPoseId != null ? "Edit Pose" : "Add Custom Pose"}</DialogTitle>
+            {editingPoseId != null && (
+              <p className="text-xs text-muted-foreground">Changes apply everywhere this pose is used.</p>
+            )}
           </DialogHeader>
           <ScrollArea className="flex-1 px-4">
             <div className="space-y-4 py-4">
@@ -610,8 +655,8 @@ export default function Builder() {
                 </div>
               </div>
               <div className="pt-4 pb-2">
-                <Button className="w-full" onClick={handleCreatePose} disabled={createPose.isPending || !newPose.name.trim()}>
-                  Save Pose
+                <Button className="w-full" onClick={handleSavePose} disabled={createPose.isPending || updatePose.isPending || !newPose.name.trim()}>
+                  {editingPoseId != null ? "Save Changes" : "Save Pose"}
                 </Button>
               </div>
             </div>

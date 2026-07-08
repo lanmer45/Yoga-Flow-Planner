@@ -75,6 +75,47 @@ export const CreatePoseResponse = zod.object({
 
 
 /**
+ * @summary Update an existing pose in the pose bank
+ */
+export const UpdatePoseParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+export const updatePoseBodyDefaultDurationSecondsMin = 5;
+
+
+
+export const UpdatePoseBody = zod.object({
+  "name": zod.string().min(1),
+  "category": zod.enum(['Centering', 'Warm-Up', 'Standing', 'Backbend', 'Twist', 'Hip', 'Floor', 'Rest', 'Closing']),
+  "defaultDurationSeconds": zod.number().min(updatePoseBodyDefaultDurationSecondsMin),
+  "durationType": zod.enum(['time', 'breaths']),
+  "defaultBreaths": zod.number().nullish(),
+  "perSide": zod.boolean(),
+  "cue": zod.string(),
+  "cautions": zod.array(zod.enum(['Back', 'Knees', 'Wrists', 'Neck', 'Shoulders', 'Hips', 'Balance'])),
+  "modification": zod.string(),
+  "chairOption": zod.string()
+})
+
+export const UpdatePoseResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "category": zod.enum(['Centering', 'Warm-Up', 'Standing', 'Backbend', 'Twist', 'Hip', 'Floor', 'Rest', 'Closing']),
+  "defaultDurationSeconds": zod.number(),
+  "durationType": zod.enum(['time', 'breaths']),
+  "defaultBreaths": zod.number().nullable(),
+  "perSide": zod.boolean(),
+  "cue": zod.string(),
+  "cautions": zod.array(zod.enum(['Back', 'Knees', 'Wrists', 'Neck', 'Shoulders', 'Hips', 'Balance'])),
+  "modification": zod.string(),
+  "chairOption": zod.string(),
+  "isCustom": zod.boolean()
+})
+
+
+/**
  * @summary List all routine tags
  */
 export const ListTagsResponseItem = zod.object({

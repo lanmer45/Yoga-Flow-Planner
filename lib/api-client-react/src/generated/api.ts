@@ -285,6 +285,77 @@ export const useCreatePose = <TError = ErrorType<unknown>,
       return useMutation(getCreatePoseMutationOptions(options));
     }
 
+export const getUpdatePoseUrl = (id: number,) => {
+
+
+
+
+  return `/api/poses/${id}`
+}
+
+/**
+ * @summary Update an existing pose in the pose bank
+ */
+export const updatePose = async (id: number,
+    poseInput: PoseInput, options?: RequestInit): Promise<Pose> => {
+
+  return customFetch<Pose>(getUpdatePoseUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(poseInput)
+  }
+);}
+
+
+
+
+export const getUpdatePoseMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePose>>, TError,{id: number;data: BodyType<PoseInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updatePose>>, TError,{id: number;data: BodyType<PoseInput>}, TContext> => {
+
+const mutationKey = ['updatePose'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePose>>, {id: number;data: BodyType<PoseInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updatePose(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdatePoseMutationResult = NonNullable<Awaited<ReturnType<typeof updatePose>>>
+    export type UpdatePoseMutationBody = BodyType<PoseInput>
+    export type UpdatePoseMutationError = ErrorType<void>
+
+    /**
+ * @summary Update an existing pose in the pose bank
+ */
+export const useUpdatePose = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePose>>, TError,{id: number;data: BodyType<PoseInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updatePose>>,
+        TError,
+        {id: number;data: BodyType<PoseInput>},
+        TContext
+      > => {
+      return useMutation(getUpdatePoseMutationOptions(options));
+    }
+
 export const getListTagsUrl = () => {
 
 
