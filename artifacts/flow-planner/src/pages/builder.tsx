@@ -259,6 +259,17 @@ export default function Builder() {
     });
   };
 
+  const updateBreaths = (section: keyof typeof sections, index: number, delta: number) => {
+    setSections(prev => {
+      const newList = [...prev[section]];
+      const entry = { ...newList[index] };
+      const current = entry.breaths ?? 5;
+      entry.breaths = Math.max(1, current + delta);
+      newList[index] = entry;
+      return { ...prev, [section]: newList };
+    });
+  };
+
   let totalSeconds = 0;
   Object.values(sections).forEach(list => {
     list.forEach(entry => {
@@ -353,6 +364,12 @@ export default function Builder() {
                         <Badge variant="outline" className="text-[10px]">{pose.category}</Badge>
                       </div>
                       <div className="text-xs text-muted-foreground mt-1 line-clamp-1">{pose.cue}</div>
+                      {pose.modification && (
+                        <div className="text-[11px] text-muted-foreground mt-1"><span className="font-medium text-foreground/70">Mod:</span> {pose.modification}</div>
+                      )}
+                      {pose.chairOption && (
+                        <div className="text-[11px] text-muted-foreground"><span className="font-medium text-foreground/70">Chair:</span> {pose.chairOption}</div>
+                      )}
                       {pose.cautions.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1">
                           {pose.cautions.map((c: string) => (
@@ -391,7 +408,20 @@ export default function Builder() {
                   
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{pose.name}</div>
-                    <div className="text-xs text-muted-foreground">{pose.category}</div>
+                    <div className="text-xs text-muted-foreground">{pose.category}{pose.perSide ? " · per side" : ""}</div>
+                    {pose.cautions.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {pose.cautions.map((c: string) => (
+                          <span key={c} className="text-[10px] bg-destructive/10 text-destructive px-1 rounded">{c}</span>
+                        ))}
+                      </div>
+                    )}
+                    {pose.modification && (
+                      <div className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1"><span className="font-medium text-foreground/70">Mod:</span> {pose.modification}</div>
+                    )}
+                    {pose.chairOption && (
+                      <div className="text-[10px] text-muted-foreground line-clamp-1"><span className="font-medium text-foreground/70">Chair:</span> {pose.chairOption}</div>
+                    )}
                   </div>
                   
                   <div className="flex flex-col items-end gap-2">
@@ -400,6 +430,13 @@ export default function Builder() {
                       <span className="text-xs font-mono w-8 text-center">{entry.durationSeconds}s</span>
                       <button onClick={() => updateDuration(name, idx, 15)} className="px-2 font-medium hover:text-primary">+</button>
                     </div>
+                    {pose.durationType === "breaths" && (
+                      <div className="flex items-center gap-2 bg-primary/5 rounded-md p-1 border border-primary/20">
+                        <button onClick={() => updateBreaths(name, idx, -1)} className="px-2 font-medium hover:text-primary">-</button>
+                        <span className="text-[11px] font-mono w-14 text-center">{entry.breaths ?? pose.defaultBreaths ?? 5} breaths</span>
+                        <button onClick={() => updateBreaths(name, idx, 1)} className="px-2 font-medium hover:text-primary">+</button>
+                      </div>
+                    )}
                     <button onClick={() => removeEntry(name, idx)} className="text-xs text-destructive hover:underline">
                       Remove
                     </button>

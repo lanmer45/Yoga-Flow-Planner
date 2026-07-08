@@ -1,4 +1,5 @@
 import { db, posesTable, tagLabelsTable, routinesTable, type RoutineSections } from "@workspace/db";
+import { logger } from "./logger";
 
 type SeedPose = {
   name: string;
@@ -306,17 +307,16 @@ const tags = [
   "Gentle",
 ];
 
-async function main() {
-  const existing = await db.select().from(posesTable);
+export async function ensureSeeded(): Promise<void> {
+  const existing = await db.select({ id: posesTable.id }).from(posesTable).limit(1);
   if (existing.length > 0) {
-    console.log("Already seeded, skipping.");
-    process.exit(0);
+    return;
   }
 
   const inserted = await db.insert(posesTable).values(poses).returning();
   const id = new Map(inserted.map((p) => [p.name, p.id]));
 
-  await db.insert(tagLabelsTable).values(tags.map((name) => ({ name, isCustom: false })));
+  await db.insert(tagLabelsTable).values(tags.map((name) => ({ name, isCustom: false }))).onConflictDoNothing();
 
   const e = (name: string, durationSeconds: number, breaths: number | null = null) => {
     const poseId = id.get(name);
@@ -391,11 +391,8 @@ async function main() {
 
   await db.insert(routinesTable).values(routines);
 
-  console.log(`Seeded ${inserted.length} poses, ${tags.length} tags, ${routines.length} routines.`);
-  process.exit(0);
+  logger.info(
+    { poses: inserted.length, tags: tags.length, routines: routines.length },
+    "Seeded initial Flow Planner data",
+  );
 }
-
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
