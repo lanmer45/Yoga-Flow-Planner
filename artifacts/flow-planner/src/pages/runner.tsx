@@ -325,9 +325,14 @@ export default function Runner() {
         {KEYFRAMES}
         {TopBar}
         <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center justify-center gap-5 text-center py-4">
-          <div className="relative overflow-hidden" style={{ width: 150, height: 120, borderRadius: 20, boxShadow: "0 0 0 1px rgba(143,211,196,.18)",
+          <div className="relative overflow-hidden shrink-0" style={{ width: 150, height: 120, borderRadius: 20, boxShadow: "0 0 0 1px rgba(143,211,196,.18)",
                background: poseImage ? `center/cover url(${poseImage})` : "linear-gradient(160deg,#2c4a4c,#16292a)" }}>
-            {!poseImage && <div className="absolute inset-0 flex items-center justify-center text-[34px] font-light" style={{ color: "rgba(143,211,196,.4)" }}>{e.pose.name?.[0]}</div>}
+            {!poseImage && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+                <span className="text-[40px] font-light leading-none" style={{ color: "rgba(143,211,196,.85)" }}>{e.pose.name?.[0]}</span>
+                <span className="text-[9px] font-medium uppercase tracking-[0.18em]" style={{ color: "rgba(143,211,196,.5)" }}>{e.pose.category}</span>
+              </div>
+            )}
           </div>
           <div className="flex flex-col items-center gap-2.5">
             <h2 className="text-[30px] font-light leading-[1.15]">{e.pose.name}</h2>
@@ -356,13 +361,17 @@ export default function Runner() {
       {TopBar}
       <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center gap-4 text-center py-4">
         {/* large pose card with name overlay */}
-        <div className="relative overflow-hidden w-full shrink-0" style={{ height: "clamp(140px, 30vh, 266px)", borderRadius: 26, boxShadow: "0 18px 40px -20px rgba(120,90,60,.5)",
+        <div className="relative overflow-hidden shrink-0" style={{ width: 168, height: 134, borderRadius: 22, boxShadow: "0 14px 32px -18px rgba(120,90,60,.5)",
              background: poseImage ? `center/cover url(${poseImage})` : "linear-gradient(150deg,#e6b48f,#c98a63)" }}>
-          <div className="absolute left-0 right-0 bottom-0 p-5 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(35,28,22,.72), rgba(35,28,22,.2) 55%, transparent)" }}>
-            {e.side && <span className="inline-block mb-2 text-[10.5px] font-semibold uppercase tracking-[0.2em] px-2.5 py-1 rounded-full" style={{ background: "rgba(194,103,68,.9)", color: "#fff" }}>{e.side}</span>}
-            <h2 className="text-[27px] font-normal leading-[1.12]" style={{ color: "#fdf7ef" }}>{e.pose.name}</h2>
-          </div>
+          {!poseImage && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+              <span className="text-[42px] font-light leading-none" style={{ color: "rgba(253,247,239,.9)" }}>{e.pose.name?.[0]}</span>
+              <span className="text-[9px] font-medium uppercase tracking-[0.18em]" style={{ color: "rgba(253,247,239,.65)" }}>{e.pose.category}</span>
+            </div>
+          )}
+          {e.side && <span className="absolute top-2.5 left-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] px-2 py-0.5 rounded-full" style={{ background: "rgba(194,103,68,.92)", color: "#fff" }}>{e.side}</span>}
         </div>
+        <h2 className="text-[26px] font-normal leading-[1.12] shrink-0" style={{ color: "#2b2620" }}>{e.pose.name}</h2>
         <div className="relative flex items-center justify-center shrink-0 mt-2" style={{ width: 172, height: 172 }}>
           <div style={{ ...ringLayer, inset: 0, background: "radial-gradient(circle, rgba(194,103,68,.2), rgba(226,167,120,.1) 60%, transparent 74%)" }} />
           <div style={{ ...ringLayer, inset: 30, border: "1.5px solid rgba(194,103,68,.3)" }} />
