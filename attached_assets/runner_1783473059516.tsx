@@ -1,18 +1,15 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useLocation } from "wouter";
-import {
-  useGetRoutine,
-  useListPoses,
-  useCreateSession,
-  getListSessionsQueryKey,
-} from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useGetRoutine, useListPoses } from "@workspace/api-client-react";
 import { Play, Pause, SkipForward, SkipBack, X, Bell, BellOff, Check, Moon, Sun } from "lucide-react";
 
 // ── Flow Runner — dual theme ────────────────────────────────────────────────
 //  • dark  = "Still Water"  (1A layout: small pose tile + breathing ring timer)
 //  • light = "Warm Studio"  (1B layout: large pose card + breathing orb timer)
 // Toggle sits in the top bar; the choice persists in localStorage.
+//
+// NOTE: add Montserrat to index.html <head> (next to the Inter link):
+// <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&display=swap" rel="stylesheet">
 
 const FONT = '"Montserrat", system-ui, sans-serif';
 
@@ -97,10 +94,6 @@ export default function Runner() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
 
-  const queryClient = useQueryClient();
-  const { mutate: createSession } = useCreateSession();
-  const savedRef = useRef(false);
-
   const wakeLockRef = useRef<any>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -163,27 +156,6 @@ export default function Runner() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [isPlaying, isFinished, currentIndex, sequence.length, chimeEnabled]);
 
-  // Record the completed session once
-  useEffect(() => {
-    if (isFinished && routine && !savedRef.current) {
-      savedRef.current = true;
-      createSession(
-        {
-          data: {
-            routineId: routine.id,
-            routineTitle: routine.title,
-            totalSeconds: routine.totalSeconds,
-          },
-        },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: getListSessionsQueryKey() });
-          },
-        },
-      );
-    }
-  }, [isFinished, routine, createSession, queryClient]);
-
   const handleSkipNext = () => {
     if (currentIndex < sequence.length - 1) { setCurrentIndex((c) => c + 1); if (chimeEnabled) playChime(); }
     else { setIsFinished(true); setIsPlaying(false); }
@@ -207,11 +179,10 @@ export default function Runner() {
         </div>
         <div className="space-y-1.5">
           <h1 className="text-[26px] font-light">Session complete</h1>
-          <p className="text-sm" style={{ opacity: 0.68 }}>{routine.title}</p>
           <p className="text-sm" style={{ opacity: 0.68 }}>{Math.round(routine.totalSeconds / 60)} minutes of practice · well done</p>
         </div>
         <button onClick={() => setLocation("/")} className="mt-2 px-8 py-3.5 rounded-full text-[13px] font-semibold uppercase tracking-[0.08em]" style={{ background: t.playBg, color: t.playText }}>
-          Done
+          Restart flow
         </button>
       </div>
     );
@@ -231,7 +202,7 @@ export default function Runner() {
   const isBreaths = e.pose.durationType === "breaths";
   const mmss = `${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, "0")}`;
   const hasSafety = (e.pose.cautions?.length > 0) || e.pose.modification || e.pose.chairOption;
-  const poseImage: string | undefined = (e.pose as any).imageUrl;
+  const poseImage: string | undefined = (e.pose as any).imageUrl; // optional: add imageUrl to poses to fill this
 
   // ── Shared fragments ──────────────────────────────────────────────────────
   const TopBar = (
