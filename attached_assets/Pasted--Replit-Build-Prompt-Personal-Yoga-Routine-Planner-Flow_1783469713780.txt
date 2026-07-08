@@ -1,0 +1,285 @@
+# Replit Build Prompt: Personal Yoga Routine Planner ("Flow Planner")
+
+Paste everything below the line into the Replit AI agent (Replit Agent / Assistant) as your build request. It is written to be complete on its own so the agent does not have to guess.
+
+Tip before you paste: start a new Replit app and when it asks what you want to build, paste this whole thing in. If the agent asks follow-up questions, you can usually just say "use your best judgment following the spec."
+
+---
+
+## What to build
+
+Build a mobile-friendly personal web app called **Flow Planner**. It is a single-user planning tool for yoga sessions. It has three jobs:
+
+1. **Library**: store and browse saved routines.
+2. **Builder**: assemble a new routine by picking poses from a pose bank, arranged into sections, with a set time for each pose.
+3. **Class Runner**: play a routine hands-free with a big on-screen timer and cue text, advancing pose by pose through the sections.
+
+There is no login and no multiple users. It is just for me. Keep it simple, calm, and easy to read on a phone.
+
+## Tech (keep it beginner-friendly)
+
+- Use a simple, standard stack: HTML, CSS, and JavaScript, or React if you prefer, but keep it to as few files as reasonably possible.
+- Store all data (pose bank, saved routines, custom tags) so it persists between sessions. Use a small local database or a JSON data file that the app reads and writes. Do NOT require me to set up an external database, API keys, or accounts. It must work as soon as I press Run.
+- No paid services. No sign-in.
+- It must look and work well on a phone in portrait, since I will mostly open it on my phone. Large tap targets, readable text, no tiny controls.
+
+## Visual tone
+
+Calm, casual, supportive. Soft neutral background, one gentle accent color (a muted green or sage is fine). Rounded corners, generous spacing, large friendly text. Nothing clinical or intense. The goal is not perfect poses, it is to breathe, move, and reset.
+
+---
+
+## Core concepts
+
+### Sections (important structural idea)
+
+Every routine is organized into three named sections, in this fixed order:
+
+1. **Centering** — the opening. Settling in, breath, setting an intention.
+2. **Flow** — the main body of the practice: warm-ups, standing work, twists, cool-down.
+3. **Closing** — the ending ritual: final rest and a gratitude / Namaste close.
+
+When I build a routine I add poses into these sections. When the Class Runner plays, it moves through Centering, then Flow, then Closing, and can show the current section name on screen. This structure should be built in, not optional, so every routine follows sound class shape automatically.
+
+### A Pose (item in the pose bank) has these fields:
+
+- **name** (e.g. "Warrior II")
+- **category**: one of Centering, Warm-Up, Standing, Backbend, Twist, Hip, Floor, Rest, Closing. (Category drives smart ordering, see below.)
+- **default_duration_seconds**: a sensible default hold time.
+- **duration_type**: either "time" (hold for X) or "breaths" (e.g. "5 breaths"). When it's breaths, show the breath text, but still keep a fallback time so the Class Runner timer has something to count.
+- **per_side**: true/false. If true, the pose is done on both sides and the runner should cue "right side" then "left side."
+- **cue**: the short spoken-style instruction text (what an instructor would say).
+- **cautions**: a list of zero or more body-area flags from this fixed set: **Back, Knees, Wrists, Neck, Shoulders, Hips, Balance**. These mark poses that may be harder or need care for that body area.
+- **modification**: plain-text "easier / gentler" option.
+- **chair_option**: plain-text chair-based version, since some people do this from a chair.
+
+### A Routine has these fields:
+
+- **title**
+- **description** (short, optional)
+- **tags**: a list chosen from a tag set (see "Tags" below). I can also add my own tags.
+- **sections**: the three sections (Centering, Flow, Closing), each holding an ordered list of pose entries. Each entry references a pose from the bank AND stores the duration I chose for it in this routine (which can differ from the pose's default).
+- **total_time**: calculated automatically by summing all pose durations across all sections. Show it as "about X minutes" at the top.
+
+### Tags
+
+Preload this starter tag set, shown as selectable labels: **Full Body, Lower Body, Upper Body, Hips, Relaxation, Retrospection, Quick Reset, Chair-Friendly, Energizing, Gentle**. Let me add my own custom tags too, and save them so they're reusable. In the Library I can filter routines by tag.
+
+---
+
+## Smart flow ordering (best-practice sequencing)
+
+The Flow section should follow a sensible arc rather than a random order. When I add poses to the Flow section, order them (or suggest an order) by category using this progression, which reflects standard class sequencing:
+
+1. Warm-Up (gentle spinal and hip mobilization)
+2. Floor / tabletop transitions
+3. Standing work
+4. Backbends
+5. Twists
+6. Hip openers
+7. Floor cool-down
+8. Rest
+
+Centering poses always sit in the Centering section; Closing/Rest rituals always sit in the Closing section. When I drop a pose into the Flow section, place it in the position its category suggests, but still let me manually drag/reorder afterward if I want. The point: I shouldn't have to think about correct order every time, but I can override it.
+
+---
+
+## Feature 1: The Library
+
+- A home screen listing all saved routines as cards.
+- Each card shows: title, total time ("about 40 min"), number of poses, its tags, and small caution labels summarizing which body areas the routine touches (e.g. "Knees", "Back") so I can glance and judge if it's gentle enough for a given group.
+- A filter bar to filter routines by tag.
+- Tapping a card opens the routine detail: the three sections in order, each pose shown with its time, cue, and any cautions, modification, and chair option shown clearly.
+- From a routine I can: **Run it** (opens Class Runner), **Edit it** (opens Builder), **Duplicate it**, or **Delete it** (with a confirm step so I don't delete by accident).
+- A clear "+ New Routine" button.
+
+## Feature 2: The Builder
+
+- Start from blank or from a duplicate of an existing routine.
+- The routine is shown as its three sections (Centering, Flow, Closing). I add poses into each section.
+- Show the pose bank, filterable by category, and searchable by name.
+- **Let me filter/flag by caution**: e.g. "hide poses with Knees caution," or at minimum clearly show the caution tags while I browse, so I can build a knee-friendly or back-friendly routine on purpose.
+- Tap a pose to add it to a section. Within a section I can **reorder** (up/down arrows are fine, simpler than drag) and **remove** poses. When I add a Flow pose, auto-place it by the smart-ordering rule above, but let me move it.
+- For each pose in my routine, let me set its **time** for this routine. Provide easy steppers (+/- 15 seconds, or preset buttons like 30s / 1 min / 2 min) rather than making me type raw numbers. For breath-based poses, let me set number of breaths and a fallback time. Mark per-side poses clearly.
+- Show the running **total time** live at the top as I build ("about 38 min") so I can hit my target length (sessions target 35 to 45 minutes).
+- Let me pick **tags** for the routine from the tag set, and add new custom tags.
+- Let me add my own **custom pose** to the bank if it's not there (all the same fields above, including category, cautions, per-side, modification, and chair option). Save it so it's reusable.
+- Save the routine to the Library with a title and optional description.
+
+## Feature 3: The Class Runner
+
+This is the hands-free "play" mode I use while leading a session.
+
+- Full-screen, phone-friendly, minimal. Big text, high contrast, readable across a room if I prop the phone up.
+- Shows the current **section name** (Centering / Flow / Closing) subtly at the top.
+- Shows for the current pose: **pose name**, a **large countdown timer** (or the breath instruction if it's breath-based), and the **cue text** below.
+- For per-side poses, cue the first side, then the second side, clearly.
+- Show a small line for **caution / modification / chair option** on the current pose so I can voice it to the group. Keep it subtle but present.
+- Controls: **Pause / Resume**, **Skip to next**, **Back to previous**, and a progress indicator ("Pose 5 of 14" plus a thin progress bar).
+- When a pose's timer ends, gently auto-advance. Offer a soft, optional chime or a clear visual transition. Any sound must be easy to mute; not everyone wants sound.
+- Prevent the phone screen from sleeping during a running class if reasonably easy (screen wake lock). If not easy, skip it.
+- At the end, show a simple "Session complete" screen with total time and a "Done" button back to the Library.
+
+---
+
+## Accessibility and safety (build these in from the start)
+
+- **Every pose must clearly display its cautions, its modification, and its chair option** wherever the pose appears (library detail, builder, runner). These are part of the data; do not hide them.
+- Caution tags should be visually consistent and easy to scan (small labels with text, never color alone, since color-only isn't accessible).
+- Include a persistent gentle disclaimer line somewhere unobtrusive: "Listen to your body. Skip or modify anything that doesn't feel right. Chair options are available for every pose."
+- Text must be large and high-contrast. Buttons must be big enough to tap easily.
+- Don't require sound. Any audio cue must have an obvious mute toggle.
+
+---
+
+## Seed data: preload the pose bank, tags, and starter routines
+
+Preload the pose bank with the poses below. Fill fields exactly as given. Where a field says "(sensible default)", pick a reasonable calm-beginner value.
+
+### CENTERING poses
+
+**Centering & Intention** — Category: Centering. Duration: 2 min (time). Per-side: no. Cue: "Comfortable seated position, sit tall, lengthen through the crown. Roll the shoulders up, back, and down. One hand to the chest, one to the belly. Inhale deeply, exhale slowly. Set an intention for your practice or your day." Cautions: (none). Modification: "Sit on a cushion to lift the hips, or sit in a chair." Chair option: "Sit toward the front of the chair, both feet flat, hands resting in the lap."
+
+### WARM-UP poses (gentle openers and mobilizations)
+
+**Neck Release** — Category: Warm-Up. Duration: 45 sec (time). Per-side: yes. Cue: "Gently drop the right ear toward the right shoulder, breathe, then switch. Move slowly, never force the neck." Cautions: Neck. Modification: "Keep the movement small; use a hand for light support, not pulling." Chair option: "Same movement, seated tall in the chair."
+
+**Shoulder Cross Stretch** — Category: Warm-Up. Duration: 30 sec (time). Per-side: yes. Cue: "Bring one arm across the front of the body, use the other arm to gently draw it closer, opening the shoulder." Cautions: Shoulders. Modification: "Lessen the pull; keep the shoulder relaxed down." Chair option: "Same, seated."
+
+**Chest Opener** — Category: Warm-Up. Duration: 30 sec (time). Per-side: no. Cue: "Reach both arms straight behind you and clasp the hands, lifting gently to open the chest." Cautions: Shoulders. Modification: "Hold a strap or towel between the hands if the clasp is tight." Chair option: "Same, seated tall, clasp behind the chair back."
+
+**Standing Side Bend** — Category: Warm-Up. Duration: 30 sec (time). Per-side: yes. Cue: "Reach both arms up and over to one side, lengthening the whole side body. Breathe into the stretch, then switch." Cautions: Back. Modification: "Keep the reach small; hand on the hip for support." Chair option: "Same, seated, reaching up and over."
+
+**Calf Stretch at Wall** — Category: Warm-Up. Duration: 30 sec (time). Per-side: yes. Cue: "Hands on a wall, step one foot back, press the heel toward the floor to stretch the calf. Switch sides." Cautions: (none). Modification: "Smaller step back for a gentler stretch." Chair option: "Seated, extend one leg and flex the foot toward you."
+
+**Windshield Wipers** — Category: Warm-Up. Duration: 45 sec (time). Per-side: no. Cue: "Hands behind you, feet flat, knees bent. Drop both knees to the right, then to the left, wipering side to side to loosen the hips and low back." Cautions: Knees, Back. Modification: "Smaller range of motion." Chair option: "Seated, gently sway the knees side to side."
+
+**Seated Figure-Four Side Bend (Around the World)** — Category: Warm-Up. Duration: 45 sec (time). Per-side: yes. Cue: "Cross one shin in front, hug the same-side arm over the other, lean toward the crossed side, then circle the torso forward and around three times. Switch." Cautions: Hips, Back. Modification: "Keep circles small and slow." Chair option: "Seated figure-four: cross one ankle over the opposite thigh and lean forward gently."
+
+**Cat / Cow** — Category: Warm-Up. Duration: 90 sec (time). Per-side: no. Cue: "In tabletop, inhale to lift the chest and arch (Cow), exhale to round the spine and tuck the chin (Cat). Flow with the breath to warm the spine. An extended version leans the hips forward on the inhale and back on the exhale." Cautions: Wrists, Knees. Modification: "Slow the movement and keep the range small; pad the knees." Chair option: "Hands on thighs, move the spine forward and back while seated."
+
+### FLOOR / TABLETOP poses
+
+**Child's Pose** — Category: Floor. Duration: 90 sec (time). Per-side: no. Cue: "Big toes together, knees wide, sit back toward the heels and reach forward, forehead resting down. Always a place you can return to." Cautions: Knees. Modification: "Widen the knees, cushion under hips or forehead." Chair option: "Fold forward slightly while seated, forearms on thighs or a desk, head relaxed."
+
+**Downward Facing Dog** — Category: Standing. Duration: 6 breaths (breaths, fallback 40s). Per-side: no. Cue: "Tuck the toes, lift the hips, make the spine long. Pedal the heels. Bend the knees as much as needed, don't force the heels down." Cautions: Wrists, Shoulders. Modification: "Bend the knees generously; rest in Child's Pose anytime." Chair option: "Hands on a wall, desk, or chair back, walk the feet back for a standing stretch."
+
+### STANDING poses
+
+**High Lunge** — Category: Standing. Duration: 4 breaths (breaths, fallback 30s). Per-side: yes. Cue: "Step one foot forward, back leg strong and reaching, arms can lift overhead. Chest open. Strong, not strained." Cautions: Knees, Balance. Modification: "Lower the back knee down for support; hands on the front thigh." Chair option: "Stand behind a chair, step one foot back into a supported lunge holding the chair."
+
+**Warrior I** — Category: Standing. Duration: 5 breaths (breaths, fallback 30s). Per-side: yes. Cue: "Front knee bent, back heel down and angled, hips facing forward, arms reaching up. Ground through both feet." Cautions: Knees, Balance, Shoulders. Modification: "Shorten the stance; hands on the hips instead of overhead." Chair option: "Seated tall, lift the arms overhead; or use the chair for balance."
+
+**Warrior II** — Category: Standing. Duration: 5 breaths (breaths, fallback 30s). Per-side: yes. Cue: "Front knee bends over the ankle, spin the back heel down, arms open to a T, gaze softly over the front hand. Strong and calm at once." Cautions: Knees, Hips, Balance. Modification: "Shorten the stance, bend the front knee less." Chair option: "Use the chair for balance, or practice the arm shape seated."
+
+**Triangle** — Category: Standing. Duration: 5 breaths (breaths, fallback 30s). Per-side: yes. Cue: "Straighten the front leg, reach forward and lower the front hand to the shin or a block, top arm reaching up, chest open." Cautions: Back, Hips, Balance. Modification: "Rest the bottom hand higher up, on the thigh or a block; keep a soft bend in the front knee." Chair option: "Seated, one arm reaches down the side, the other arm reaches up and over."
+
+**Assisted Lizard with Twist** — Category: Standing. Duration: 5 breaths (breaths, fallback 30s). Per-side: yes. Cue: "From a lunge, walk the front foot wide, lower the hands (or forearms to a block) inside the front foot, then gently open into a twist reaching one arm up." Cautions: Hips, Knees, Wrists. Modification: "Stay higher on the hands; lower the back knee; skip the twist." Chair option: "Seated figure-four with a gentle seated twist toward the bent knee."
+
+**Standing Forward Bend** — Category: Standing. Duration: 5 breaths (breaths, fallback 40s). Per-side: no. Cue: "Feet to the top of the mat, fold forward, head and arms hanging heavy, knees soft. Let the back of the body soften. Swan-dive down, and roll up one vertebra at a time to finish." Cautions: Back, Balance. Modification: "Keep a deep bend in the knees; hands on blocks or a chair." Chair option: "Fold forward while seated, or rest hands on a desk or chair seat."
+
+### BACKBEND poses
+
+**Cobra / Upward Dog** — Category: Backbend. Duration: 3 rounds (time, sensible default 45s). Per-side: no. Cue: "Lie on the belly, hands under the shoulders, tops of the feet pressing down. Inhale to lift the chest gently, elbows close, shoulders away from the ears. Exhale to lower. Use the back, not just the arms." Cautions: Back, Wrists. Modification: "Lift only a little; keep it small and led by the back muscles." Chair option: "Seated tall, hands behind the head or on the chair sides, lift the chest into a gentle seated backbend."
+
+### TWIST poses
+
+**Half Lord of the Fishes (Seated Twist)** — Category: Twist. Duration: 5 breaths (breaths, fallback 30s). Per-side: yes. Cue: "Sit tall first, one leg bent or crossed over. Inhale to lengthen, exhale to twist toward the bent knee. Twist from the upper back, don't force the neck." Cautions: Back, Neck. Modification: "Keep the bottom leg straight, gentle twist." Chair option: "Seated, twist gently toward the chair back."
+
+### HIP poses
+
+**90/90 Hip Stretch** — Category: Hip. Duration: 90 sec (time). Per-side: yes. Cue: "One leg bent in front (shin parallel to the mat edge), the other bent behind at about 90 degrees. Sit tall, or lean forward gently over the front leg to open the hip." Cautions: Knees, Hips. Modification: "Sit up on a cushion and stay upright rather than leaning." Chair option: "Cross one ankle over the opposite thigh for a seated figure-four."
+
+### FLOOR COOL-DOWN poses
+
+**Supine Spinal Twist** — Category: Floor. Duration: 90 sec (time). Per-side: yes. Cue: "On the back, draw one knee in and drop it across the body, opposite arm extended, gaze away from the twist. Shoulders soft, belly and jaw relaxed." Cautions: Back. Modification: "Cushion between or under the knees; keep the twist small." Chair option: "Seated tall, rotate gently side to side."
+
+### CLOSING poses
+
+**Corpse Pose (Shavasana)** — Category: Rest. Duration: 4 min (time). Per-side: no. Cue: "Lie flat, arms by the sides, palms up. Let the breath return to normal. Soften the feet, legs, hips, back, shoulders, hands, and face. Just rest and let the body integrate the practice." Cautions: (none). Modification: "Bend the knees with feet flat, or a cushion under the knees to ease the low back." Chair option: "Sit comfortably, both feet on the floor, hands resting in the lap."
+
+**Gratitude Close / Namaste** — Category: Closing. Duration: 1 min (time). Per-side: no. Cue: "Return to a comfortable seat, palms together at the heart. A few deep breaths. Inhale gratitude, exhale stress. Notice how you feel now compared to the start. Thank you for taking this time. Namaste." Cautions: (none). Modification: "Any comfortable seated or lying position." Chair option: "Seated in the chair, palms together at the heart."
+
+---
+
+### Starter routine 1: "Ground, Energize, Release (Full)"
+
+Description: "Beginner-friendly full-body reset, around 40 minutes. The goal isn't perfect poses, it's to breathe, move, and reset."
+Tags: Full Body, Gentle.
+
+**Centering:** Centering & Intention (2 min)
+
+**Flow:**
+1. Cat / Cow (90 sec)
+2. Child's Pose (90 sec)
+3. Downward Facing Dog (6 breaths)
+4. High Lunge (4 breaths each side)
+5. Warrior II (5 breaths each side)
+6. Standing Forward Bend (5 breaths)
+7. Cobra / Upward Dog (3 rounds, ~45s)
+8. Half Lord of the Fishes (5 breaths each side)
+9. 90/90 Hip Stretch (90 sec each side)
+10. Supine Spinal Twist (90 sec each side)
+
+**Closing:**
+1. Corpse Pose (4 min)
+2. Gratitude Close / Namaste (1 min)
+
+### Starter routine 2: "Quick Reset (Chair-Friendly)"
+
+Description: "A shorter, gentler sequence, easy to do from a chair. Good for a mid-day break."
+Tags: Quick Reset, Chair-Friendly, Gentle, Relaxation.
+
+**Centering:** Centering & Intention (1 min)
+
+**Flow:**
+1. Neck Release (45 sec each side)
+2. Shoulder Cross Stretch (30 sec each side)
+3. Cat / Cow (1 min)
+4. Half Lord of the Fishes (4 breaths each side)
+5. Standing Forward Bend (5 breaths)
+6. Supine Spinal Twist (1 min each side)
+
+**Closing:**
+1. Corpse Pose (2 min)
+2. Gratitude Close / Namaste (1 min)
+
+### Starter routine 3: "Standing Strong (Energizing)"
+
+Description: "A more active standing sequence to wake the body up. Still beginner-friendly."
+Tags: Full Body, Lower Body, Energizing.
+
+**Centering:** Centering & Intention (1 min)
+
+**Flow:**
+1. Standing Side Bend (30 sec each side)
+2. Cat / Cow (1 min)
+3. Downward Facing Dog (6 breaths)
+4. High Lunge (4 breaths each side)
+5. Warrior I (5 breaths each side)
+6. Warrior II (5 breaths each side)
+7. Triangle (5 breaths each side)
+8. Assisted Lizard with Twist (5 breaths each side)
+9. Standing Forward Bend (5 breaths)
+10. Supine Spinal Twist (90 sec each side)
+
+**Closing:**
+1. Corpse Pose (3 min)
+2. Gratitude Close / Namaste (1 min)
+
+---
+
+## Build order (do it in stages so I can check each part)
+
+1. First set up the data (pose bank, tags, the three seed routines with their sections) and the Library screen so I can see routines listed, filter by tag, and open one. Confirm it persists after refresh.
+2. Then build the Class Runner so I can press Run and play through a routine, section by section, with the timer and cues.
+3. Then build the Builder so I can create and edit routines across the three sections, set times, choose tags, and add custom poses, with smart Flow ordering.
+4. Then polish: caution tags, chair options, modifications shown everywhere, per-side cueing, mobile layout, mute toggle, screen wake lock, disclaimer line.
+
+After each stage, briefly tell me what to click to test it. Explain things simply, assume I am not a developer.
+
+## Please avoid
+
+- No sign-in, accounts, or external databases or API keys.
+- No features I didn't ask for. Keep it focused on these three jobs.
+- Don't lose my data on refresh. Persistence is required.
