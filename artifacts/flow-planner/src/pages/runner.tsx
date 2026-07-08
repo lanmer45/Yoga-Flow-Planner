@@ -49,11 +49,32 @@ const THEME = {
   },
 };
 
+// Single shared AudioContext. Mobile browsers create it "suspended" and it only
+// makes sound after being resumed inside a user gesture (e.g. tapping Play).
+let sharedAudioCtx: AudioContext | null = null;
+function getAudioCtx(): AudioContext | null {
+  try {
+    const AC = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AC) return null;
+    if (!sharedAudioCtx) sharedAudioCtx = new AC();
+    return sharedAudioCtx;
+  } catch {
+    return null;
+  }
+}
+
+// Call inside a user gesture to unlock audio on mobile.
+function unlockAudio() {
+  const ctx = getAudioCtx();
+  if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {});
+}
+
 // Short gong synth — a bright, sustained metallic strike that rings out and decays
 function playChime() {
   try {
-    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-    const ctx = new AudioContext();
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume().catch(() => {});
     const now = ctx.currentTime;
 
     // A gong is a fundamental plus slightly inharmonic overtones ringing together.
@@ -206,7 +227,10 @@ export default function Runner() {
     }
   }, [isFinished, routine, createSession, queryClient]);
 
+  const togglePlay = () => { unlockAudio(); setIsPlaying((p) => !p); };
+
   const handleSkipNext = () => {
+    unlockAudio();
     if (currentIndex < sequence.length - 1) { setCurrentIndex((c) => c + 1); if (chimeEnabled) playChime(); }
     else { setIsFinished(true); setIsPlaying(false); }
   };
@@ -296,7 +320,7 @@ export default function Runner() {
         <button onClick={handleSkipBack} disabled={currentIndex === 0} className="p-2 opacity-60 disabled:opacity-25 transition-opacity">
           <SkipBack className="fill-current" style={{ width: 26, height: 26 }} />
         </button>
-        <button onClick={() => setIsPlaying(!isPlaying)} className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
+        <button onClick={togglePlay} className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
                 style={{ width: 74, height: 74, background: t.playBg, color: t.playText, boxShadow: t.playShadow }}>
           {isPlaying ? <Pause className="fill-current" style={{ width: 26, height: 26 }} /> : <Play className="fill-current" style={{ width: 28, height: 28, marginLeft: 3 }} />}
         </button>
