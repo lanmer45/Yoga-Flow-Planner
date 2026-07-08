@@ -21,6 +21,29 @@ export default function Library() {
     });
   };
 
+  const relativeDays = (iso: string) => {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "recently";
+    const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+    const days = Math.round((startOf(new Date()) - startOf(d)) / 86400000);
+    if (days <= 0) return "today";
+    if (days === 1) return "yesterday";
+    if (days < 7) return `${days} days ago`;
+    if (days < 14) return "last week";
+    if (days < 60) return `${Math.floor(days / 7)} weeks ago`;
+    return `${Math.floor(days / 30)} months ago`;
+  };
+
+  // Most recent completion per routine, to help avoid repeating a flow too soon
+  const lastPracticed = new Map<number, string>();
+  sessions?.forEach((s) => {
+    if (s.routineId == null) return;
+    const existing = lastPracticed.get(s.routineId);
+    if (!existing || new Date(String(s.completedAt)) > new Date(existing)) {
+      lastPracticed.set(s.routineId, String(s.completedAt));
+    }
+  });
+
   const filteredRoutines = routines?.filter(routine => 
     selectedTag === "All" ? true : routine.tags.includes(selectedTag)
   );
@@ -80,6 +103,14 @@ export default function Library() {
                   <span>~{Math.round(routine.totalSeconds / 60)} min</span>
                   <span>{routine.poseCount} poses</span>
                 </div>
+                <div className="flex items-center gap-1.5 mt-2 text-xs">
+                  <History className="w-3.5 h-3.5" />
+                  {lastPracticed.has(routine.id) ? (
+                    <span>Last practiced {relativeDays(lastPracticed.get(routine.id)!)}</span>
+                  ) : (
+                    <span className="italic opacity-70">Not practiced yet</span>
+                  )}
+                </div>
                 {routine.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-3">
                     {routine.tags.map(tag => (
@@ -108,12 +139,16 @@ export default function Library() {
         )}
       </div>
       
-      {sessions && sessions.length > 0 && (
-        <div className="space-y-3 pt-4">
-          <div className="flex items-center gap-2 text-primary">
-            <History className="w-5 h-5" />
-            <h2 className="text-xl font-light">History</h2>
+      <div className="space-y-3 pt-4">
+        <div className="flex items-center gap-2 text-primary">
+          <History className="w-5 h-5" />
+          <h2 className="text-xl font-light">History</h2>
+        </div>
+        {!sessions || sessions.length === 0 ? (
+          <div className="rounded-lg border border-dashed bg-card/50 px-4 py-6 text-center text-sm text-muted-foreground">
+            No practices logged yet. Finish a flow all the way through and it'll show up here so you can pace how often you repeat each one.
           </div>
+        ) : (
           <div className="space-y-2">
             {sessions.map((session) => (
               <div
@@ -132,8 +167,8 @@ export default function Library() {
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <p className="text-center text-xs text-muted-foreground pt-8 pb-4">
         Listen to your body. Skip or modify anything that doesn't feel right. Chair options are available for every pose.
