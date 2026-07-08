@@ -495,7 +495,7 @@ export default function Builder() {
   return (
     <div className="max-w-md mx-auto p-4 pb-24 space-y-6">
       <div className="flex items-center justify-between bg-background/80 backdrop-blur-md sticky top-0 z-10 pt-2 pb-4 -mx-4 px-4 border-b border-border/50">
-        <Link href={isEdit ? `/routines/${params.id}` : "/"} className="text-sm font-medium text-muted-foreground hover:text-primary">
+        <Link href={isEdit ? `/routines/${params.id}` : "/flows"} className="text-sm font-medium text-muted-foreground hover:text-primary">
           Cancel
         </Link>
         <div className="text-sm font-semibold bg-secondary/10 text-secondary px-3 py-1 rounded-full">

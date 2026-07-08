@@ -3,7 +3,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
+import Home from "@/pages/home";
 import Library from "@/pages/library";
+import Poses from "@/pages/poses";
+import History from "@/pages/history";
 import RoutineDetail from "@/pages/routine-detail";
 import Builder from "@/pages/builder";
 import Runner from "@/pages/runner";
@@ -13,7 +16,10 @@ const queryClient = new QueryClient();
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Library} />
+      <Route path="/" component={Home} />
+      <Route path="/flows" component={Library} />
+      <Route path="/poses" component={Poses} />
+      <Route path="/history" component={History} />
       <Route path="/routines/:id" component={RoutineDetail} />
       <Route path="/builder" component={Builder} />
       <Route path="/builder/:id" component={Builder} />

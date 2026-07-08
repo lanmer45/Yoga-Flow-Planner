@@ -99,7 +99,7 @@ export default function RoutineDetail() {
     deleteRoutine.mutate({ id: routine.id }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["/api/routines"] });
-        setLocation("/");
+        setLocation("/flows");
       }
     });
   };
@@ -116,8 +116,8 @@ export default function RoutineDetail() {
   return (
     <div className="max-w-md mx-auto p-4 pb-24 space-y-6">
       <div className="space-y-4">
-        <Link href="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-          ← Back to Library
+        <Link href="/flows" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+          ← Back to Flows
         </Link>
         
         <div>

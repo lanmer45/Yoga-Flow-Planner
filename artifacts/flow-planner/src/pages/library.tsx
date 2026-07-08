@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Plus, Play, History } from "lucide-react";
+import { Plus, Play, History, ChevronLeft } from "lucide-react";
 import { useListRoutines, useListTags, useListSessions } from "@workspace/api-client-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,15 +11,6 @@ export default function Library() {
   const { data: tags } = useListTags();
   const { data: sessions } = useListSessions();
   const [selectedTag, setSelectedTag] = useState<string>("All");
-
-  const formatDate = (iso: string) => {
-    const d = new Date(iso);
-    return d.toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
 
   const relativeDays = (iso: string) => {
     const d = new Date(iso);
@@ -51,11 +42,15 @@ export default function Library() {
   return (
     <div className="max-w-md mx-auto p-4 pb-24 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-light text-primary">Flows</h1>
+        <Link href="/" className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary">
+          <ChevronLeft className="w-4 h-4" /> Home
+        </Link>
         <Link href="/builder" className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">
           <Plus /> New
         </Link>
       </div>
+
+      <h1 className="text-3xl font-light text-primary">Flows</h1>
 
       <div className="w-full overflow-hidden">
         <ScrollArea className="w-full whitespace-nowrap pb-2">
@@ -139,35 +134,13 @@ export default function Library() {
         )}
       </div>
       
-      <div className="space-y-3 pt-4">
-        <div className="flex items-center gap-2 text-primary">
-          <History className="w-5 h-5" />
-          <h2 className="text-xl font-light">History</h2>
-        </div>
-        {!sessions || sessions.length === 0 ? (
-          <div className="rounded-lg border border-dashed bg-card/50 px-4 py-6 text-center text-sm text-muted-foreground">
-            No practices logged yet. Finish a flow all the way through and it'll show up here so you can pace how often you repeat each one.
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {sessions.map((session) => (
-              <div
-                key={session.id}
-                className="flex items-center justify-between rounded-lg border bg-card px-4 py-3 text-sm"
-              >
-                <div className="min-w-0">
-                  <p className="font-medium truncate">{session.routineTitle}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatDate(String(session.completedAt))}
-                  </p>
-                </div>
-                <span className="text-muted-foreground whitespace-nowrap pl-3">
-                  {Math.round(session.totalSeconds / 60)} min
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
+      <div className="pt-2">
+        <Link
+          href="/history"
+          className="flex items-center justify-center gap-2 rounded-lg border border-dashed bg-card/50 px-4 py-3 text-sm font-medium text-muted-foreground hover:text-primary hover:border-primary transition-colors"
+        >
+          <History className="w-4 h-4" /> View practice history
+        </Link>
       </div>
 
       <p className="text-center text-xs text-muted-foreground pt-8 pb-4">
