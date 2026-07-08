@@ -213,7 +213,7 @@ export default function Runner() {
   const handleSkipBack = () => { if (currentIndex > 0) setCurrentIndex((c) => c - 1); };
   const toggleMode = () => setMode((m) => (m === "dark" ? "light" : "dark"));
 
-  const rootStyle: React.CSSProperties = { background: t.bg, color: t.text, fontFamily: FONT };
+  const rootStyle: React.CSSProperties = { background: t.bg, color: t.text, fontFamily: FONT, height: "100dvh" };
 
   if (loadingRoutine || loadingPoses)
     return <div className="fixed inset-0 flex items-center justify-center" style={{ ...rootStyle, color: t.accent }}>Loading…</div>;
@@ -257,7 +257,7 @@ export default function Runner() {
 
   // ── Shared fragments ──────────────────────────────────────────────────────
   const TopBar = (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between shrink-0">
       <button onClick={() => setLocation(`/routines/${routine.id}`)} className="p-1.5 -ml-1.5 opacity-60">
         <X className="w-5 h-5" strokeWidth={1.7} />
       </button>
@@ -281,7 +281,7 @@ export default function Runner() {
   );
 
   const Safety = hasSafety ? (
-    <div className="flex flex-wrap gap-1.5 justify-center mb-5">
+    <div className="flex flex-wrap gap-1.5 justify-center mb-5 shrink-0">
       {e.pose.cautions?.map((c: string) => (
         <span key={c} className="text-[10.5px] font-medium px-2.5 py-[5px] rounded-lg" style={{ background: t.cautionBg, color: t.cautionText, border: mode === "light" ? "1px solid rgba(194,103,68,.25)" : "none" }}>Caution · {c}</span>
       ))}
@@ -291,7 +291,7 @@ export default function Runner() {
   ) : null;
 
   const Controls = (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 shrink-0">
       <div className="flex items-center justify-center gap-9">
         <button onClick={handleSkipBack} disabled={currentIndex === 0} className="p-2 opacity-60 disabled:opacity-25 transition-opacity">
           <SkipBack className="fill-current" style={{ width: 26, height: 26 }} />
@@ -321,10 +321,10 @@ export default function Runner() {
   // ── DARK layout (1A · Still Water) ────────────────────────────────────────
   if (mode === "dark") {
     return (
-      <div className="fixed inset-0 flex flex-col px-6 pt-7 pb-8" style={rootStyle}>
+      <div className="fixed inset-x-0 top-0 overflow-hidden flex flex-col px-6 pt-7 pb-8" style={rootStyle}>
         {KEYFRAMES}
         {TopBar}
-        <div className="flex-1 flex flex-col items-center justify-center gap-5 text-center">
+        <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center justify-center gap-5 text-center py-4">
           <div className="relative overflow-hidden" style={{ width: 150, height: 120, borderRadius: 20, boxShadow: "0 0 0 1px rgba(143,211,196,.18)",
                background: poseImage ? `center/cover url(${poseImage})` : "linear-gradient(160deg,#2c4a4c,#16292a)" }}>
             {!poseImage && <div className="absolute inset-0 flex items-center justify-center text-[34px] font-light" style={{ color: "rgba(143,211,196,.4)" }}>{e.pose.name?.[0]}</div>}
@@ -351,7 +351,7 @@ export default function Runner() {
 
   // ── LIGHT layout (1B · Warm Studio) ───────────────────────────────────────
   return (
-    <div className="fixed inset-0 flex flex-col px-6 pt-6 pb-8" style={rootStyle}>
+    <div className="fixed inset-x-0 top-0 overflow-hidden flex flex-col px-6 pt-6 pb-8" style={rootStyle}>
       {KEYFRAMES}
       {TopBar}
       {/* large pose card with name overlay */}
@@ -362,7 +362,7 @@ export default function Runner() {
           <h2 className="text-[27px] font-normal leading-[1.12]" style={{ color: "#fdf7ef" }}>{e.pose.name}</h2>
         </div>
       </div>
-      <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center">
+      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center justify-center gap-4 text-center py-4">
         <div className="relative flex items-center justify-center" style={{ width: 172, height: 172 }}>
           <div style={{ ...ringLayer, inset: 0, background: "radial-gradient(circle, rgba(194,103,68,.2), rgba(226,167,120,.1) 60%, transparent 74%)" }} />
           <div style={{ ...ringLayer, inset: 30, border: "1.5px solid rgba(194,103,68,.3)" }} />
