@@ -49,23 +49,45 @@ const THEME = {
   },
 };
 
-// Soft chime synth
+// Short gong synth — a bright, sustained metallic strike that rings out and decays
 function playChime() {
   try {
     const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
     const ctx = new AudioContext();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(432, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(216, ctx.currentTime + 1.5);
-    gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.1);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.5);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 3);
+    const now = ctx.currentTime;
+
+    // A gong is a fundamental plus slightly inharmonic overtones ringing together.
+    const fundamental = 196; // G3 — warm, resonant base
+    const partials = [
+      { ratio: 1, gain: 0.5 },
+      { ratio: 2.01, gain: 0.28 },
+      { ratio: 2.76, gain: 0.18 },
+      { ratio: 3.98, gain: 0.12 },
+      { ratio: 5.42, gain: 0.08 },
+    ];
+
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(0, now);
+    master.gain.linearRampToValueAtTime(1, now + 0.005); // fast metallic attack
+    master.gain.exponentialRampToValueAtTime(0.0001, now + 3.2); // long ring-out
+    master.connect(ctx.destination);
+
+    partials.forEach(({ ratio, gain }) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = "sine";
+      const freq = fundamental * ratio;
+      osc.frequency.setValueAtTime(freq, now);
+      // subtle downward shimmer as the metal settles
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.99, now + 3);
+      g.gain.setValueAtTime(gain, now);
+      // higher partials decay faster, like a real gong
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 3.2 / ratio);
+      osc.connect(g);
+      g.connect(master);
+      osc.start(now);
+      osc.stop(now + 3.4);
+    });
   } catch (e) {
     // Ignore audio context errors
   }
