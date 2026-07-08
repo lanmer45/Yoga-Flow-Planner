@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useLocation, Link } from "wouter";
-import { useGetRoutine, useListPoses } from "@workspace/api-client-react";
+import { useGetRoutine, useListPoses, useCreateSession, getListSessionsQueryKey } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, SkipForward, SkipBack, X, Bell, BellOff, Check } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -43,6 +44,10 @@ export default function Runner() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
   
+  const queryClient = useQueryClient();
+  const { mutate: createSession } = useCreateSession();
+  const savedRef = useRef(false);
+
   const wakeLockRef = useRef<any>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -151,6 +156,27 @@ export default function Runner() {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [isPlaying, isFinished, currentIndex, sequence.length, chimeEnabled]);
+
+  // Record the completed session once
+  useEffect(() => {
+    if (isFinished && routine && !savedRef.current) {
+      savedRef.current = true;
+      createSession(
+        {
+          data: {
+            routineId: routine.id,
+            routineTitle: routine.title,
+            totalSeconds: routine.totalSeconds,
+          },
+        },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: getListSessionsQueryKey() });
+          },
+        },
+      );
+    }
+  }, [isFinished, routine, createSession, queryClient]);
 
   const handleSkipNext = () => {
     if (currentIndex < sequence.length - 1) {

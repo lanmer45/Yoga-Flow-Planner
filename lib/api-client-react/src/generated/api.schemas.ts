@@ -158,6 +158,24 @@ export interface RoutineInput {
   sections: RoutineSections;
 }
 
+export interface Session {
+  id: number;
+  /** @nullable */
+  routineId: number | null;
+  routineTitle: string;
+  totalSeconds: number;
+  completedAt: string;
+}
+
+export interface SessionInput {
+  /** @nullable */
+  routineId?: number | null;
+  /** @minLength 1 */
+  routineTitle: string;
+  /** @minimum 0 */
+  totalSeconds: number;
+}
+
 export interface RoutineSummary {
   id: number;
   title: string;

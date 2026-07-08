@@ -1,0 +1,1 @@
+- [API codegen workflow](api-codegen.md) — adding an API endpoint requires editing openapi.yaml then running codegen; zod + react-query clients are generated, not hand-written.

@@ -307,3 +307,39 @@ export const DuplicateRoutineResponse = zod.object({
 })
 
 
+/**
+ * @summary List completed practice sessions, most recent first
+ */
+export const ListSessionsResponseItem = zod.object({
+  "id": zod.number(),
+  "routineId": zod.number().nullable(),
+  "routineTitle": zod.string(),
+  "totalSeconds": zod.number(),
+  "completedAt": zod.coerce.date()
+})
+export const ListSessionsResponse = zod.array(ListSessionsResponseItem)
+
+
+/**
+ * @summary Record a completed practice session
+ */
+
+export const createSessionBodyTotalSecondsMin = 0;
+
+
+
+export const CreateSessionBody = zod.object({
+  "routineId": zod.number().nullish(),
+  "routineTitle": zod.string().min(1),
+  "totalSeconds": zod.number().min(createSessionBodyTotalSecondsMin)
+})
+
+export const CreateSessionResponse = zod.object({
+  "id": zod.number(),
+  "routineId": zod.number().nullable(),
+  "routineTitle": zod.string(),
+  "totalSeconds": zod.number(),
+  "completedAt": zod.coerce.date()
+})
+
+

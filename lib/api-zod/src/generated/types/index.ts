@@ -21,5 +21,7 @@ export * from './routineEntry';
 export * from './routineInput';
 export * from './routineSections';
 export * from './routineSummary';
+export * from './session';
+export * from './sessionInput';
 export * from './tagLabel';
 export * from './tagLabelInput';

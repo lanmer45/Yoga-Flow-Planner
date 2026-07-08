@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Plus, Play } from "lucide-react";
-import { useListRoutines, useListTags } from "@workspace/api-client-react";
+import { Plus, Play, History } from "lucide-react";
+import { useListRoutines, useListTags, useListSessions } from "@workspace/api-client-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -9,7 +9,17 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 export default function Library() {
   const { data: routines, isLoading: loadingRoutines } = useListRoutines();
   const { data: tags } = useListTags();
+  const { data: sessions } = useListSessions();
   const [selectedTag, setSelectedTag] = useState<string>("All");
+
+  const formatDate = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
 
   const filteredRoutines = routines?.filter(routine => 
     selectedTag === "All" ? true : routine.tags.includes(selectedTag)
@@ -98,6 +108,33 @@ export default function Library() {
         )}
       </div>
       
+      {sessions && sessions.length > 0 && (
+        <div className="space-y-3 pt-4">
+          <div className="flex items-center gap-2 text-primary">
+            <History className="w-5 h-5" />
+            <h2 className="text-xl font-light">History</h2>
+          </div>
+          <div className="space-y-2">
+            {sessions.map((session) => (
+              <div
+                key={session.id}
+                className="flex items-center justify-between rounded-lg border bg-card px-4 py-3 text-sm"
+              >
+                <div className="min-w-0">
+                  <p className="font-medium truncate">{session.routineTitle}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDate(String(session.completedAt))}
+                  </p>
+                </div>
+                <span className="text-muted-foreground whitespace-nowrap pl-3">
+                  {Math.round(session.totalSeconds / 60)} min
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <p className="text-center text-xs text-muted-foreground pt-8 pb-4">
         Listen to your body. Skip or modify anything that doesn't feel right. Chair options are available for every pose.
       </p>

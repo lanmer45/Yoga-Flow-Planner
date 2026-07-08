@@ -16,6 +16,8 @@ tags:
     description: Routine operations
   - name: tags
     description: Tag operations
+  - name: sessions
+    description: Practice session history operations
 paths:
   /healthz:
     get:
@@ -219,6 +221,37 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorMessage"
+  /sessions:
+    get:
+      operationId: listSessions
+      tags: [sessions]
+      summary: List completed practice sessions, most recent first
+      responses:
+        "200":
+          description: List of completed sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Session"
+    post:
+      operationId: createSession
+      tags: [sessions]
+      summary: Record a completed practice session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
 components:
   schemas:
     HealthStatus:
@@ -422,6 +455,33 @@ components:
             type: string
         sections:
           $ref: "#/components/schemas/RoutineSections"
+    Session:
+      type: object
+      required: [id, routineId, routineTitle, totalSeconds, completedAt]
+      properties:
+        id:
+          type: integer
+        routineId:
+          type: ["integer", "null"]
+        routineTitle:
+          type: string
+        totalSeconds:
+          type: integer
+        completedAt:
+          type: string
+          format: date-time
+    SessionInput:
+      type: object
+      required: [routineTitle, totalSeconds]
+      properties:
+        routineId:
+          type: ["integer", "null"]
+        routineTitle:
+          type: string
+          minLength: 1
+        totalSeconds:
+          type: integer
+          minimum: 0
     RoutineSummary:
       type: object
       required: [id, title, description, tags, totalSeconds, poseCount, cautions]
