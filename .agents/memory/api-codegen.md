@@ -15,3 +15,6 @@ Adding an endpoint is a multi-step, codegen-driven flow. Do NOT hand-write zod s
 **Why:** The zod schemas and React Query hooks are generated artifacts; editing them by hand is overwritten on next codegen. The openapi.yaml title must stay "Api" (orval transformer assumption).
 
 Nullable fields use `type: ["integer", "null"]` in openapi. Timestamps use `format: date-time` and surface as `string` in the generated TS client.
+
+## Staleness gotcha
+The generated client can drift from `openapi.yaml` (e.g. a `use*` hook missing even though the spec has the endpoint), which breaks `pnpm typecheck` in consuming artifacts. A workspace reboot/package install may regenerate from an older spec state. Fix: run `pnpm --filter @workspace/api-spec run codegen`, then re-run the artifact typecheck.
