@@ -1,0 +1,20 @@
+Task: Refactor the Runner page (artifacts/flow-planner/src/pages/runner.tsx) to use the app's central design tokens, and fix two layout bugs. Do not change any behavior, timers, sequence logic, or data fetching. Do not touch any other page, any component in src/components/ui, the API, or the database.
+
+Stack context: Vite + React + Tailwind v4 + shadcn. All design tokens live in artifacts/flow-planner/src/index.css using CSS variables under :root (light) and .dark (dark).
+
+Part 1: Migrate the Runner themes into central tokens
+1. runner.tsx currently defines a local THEME object with two hardcoded palettes: "Still Water" (dark) and "Warm Studio" (light). Move every color, shadow, and gradient value from that object into index.css as new CSS variables, namespaced with --runner- (for example --runner-play-bg, --runner-accent, --runner-finish-halo, --runner-progress-track). Put the Warm Studio values in :root and the Still Water values in the .dark block.
+2. Delete the local THEME object and the localStorage-based mode logic. The Runner's theme toggle should instead toggle the app-wide .dark class on the document root, same as the rest of the app.
+3. Replace all inline style color values in runner.tsx with references to the new CSS variables (var(--runner-...)). Layout-only inline styles (width, height, inset) may stay for now. Zero hex colors or rgba literals should remain in runner.tsx when done.
+
+Part 2: Fix the oval breathing ring
+In the dark layout, the breathing ring wrapper (the 186x186 div with the fp-breathe ring layers) is missing shrink-0, so flexbox compresses its height on short viewports and the 50% border radius renders as an oval. Add shrink-0 and aspect-square to that wrapper, matching how the light layout's ring wrapper already does it.
+
+Part 3: Fix the scroll clipping
+The dark layout's scroll container uses justify-center with overflow-y-auto, which clips the top of content when it overflows. Remove justify-center from that container and add my-auto to the inner content block so it centers when short but scrolls correctly when tall. Apply the same fix to the light layout if it has the same pattern.
+
+Verification before you report done:
+- Toggle between light and dark in the Runner: both palettes must look identical to before the refactor.
+- Confirm the breathing ring stays perfectly circular in both modes at a short viewport height (test around 600px tall).
+- Confirm the pose name at the top is fully reachable by scrolling on a short viewport.
+- Grep runner.tsx and confirm no #hex or rgba( literals remain.

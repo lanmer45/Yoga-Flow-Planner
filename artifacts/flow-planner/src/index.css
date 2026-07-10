@@ -165,6 +165,35 @@
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 
+  /* Flow Runner — Warm Studio (light) */
+  --runner-bg: radial-gradient(120% 68% at 50% 2%, #fcf5ec 0%, #f2e7d7 58%, #ecdfcb 100%);
+  --runner-text: #322c26;
+  --runner-accent: #c26744;
+  --runner-play-bg: #c26744;
+  --runner-play-text: #ffffff;
+  --runner-play-shadow: 0 12px 28px -8px rgba(194,103,68,.6);
+  --runner-progress-track: rgba(50,44,38,.12);
+  --runner-caution-bg: rgba(194,103,68,.13);
+  --runner-caution-text: #a4522f;
+  --runner-caution-border: 1px solid rgba(194,103,68,.25);
+  --runner-chip-bg: transparent;
+  --runner-chip-text: rgba(50,44,38,.7);
+  --runner-chip-border: 1px solid rgba(50,44,38,.15);
+  --runner-finish-halo: rgba(194,103,68,.14);
+  --runner-tile-shadow: 0 14px 32px -18px rgba(120,90,60,.5);
+  --runner-tile-bg: linear-gradient(150deg,#e6b48f,#c98a63);
+  --runner-glyph-strong: rgba(253,247,239,.9);
+  --runner-glyph-soft: rgba(253,247,239,.65);
+  --runner-side-badge-bg: rgba(194,103,68,.92);
+  --runner-side-badge-text: #ffffff;
+  --runner-heading: #2b2620;
+  --runner-timer-color: #2b2620;
+  --runner-ring1: rgba(194,103,68,.3);
+  --runner-ring2: rgba(194,103,68,.3);
+  --runner-ring-glow: radial-gradient(circle, rgba(194,103,68,.2), transparent 72%);
+  --runner-orb-bg: radial-gradient(circle, rgba(194,103,68,.2), rgba(226,167,120,.1) 60%, transparent 74%);
+  --runner-orb-ring: rgba(194,103,68,.3);
+
   /* Automatically computed borders - intensity can be controlled by the user by the --opaque-button-border-intensity setting */
 
   /* Fallback for older browsers */
@@ -258,6 +287,35 @@
   --shadow-lg: 0px 2px 0px 0px 0 0% 0% / 0.5, 0px 4px 6px -1px 0 0% 0% / 0.5;
   --shadow-xl: 0px 2px 0px 0px 0 0% 0% / 0.5, 0px 8px 10px -1px 0 0% 0% / 0.5;
   --shadow-2xl: 0px 2px 0px 0px 0 0% 0% / 0.5;
+
+  /* Flow Runner — Still Water (dark) */
+  --runner-bg: radial-gradient(135% 80% at 50% -8%, #22383c 0%, #10201f 52%, #0a1414 100%);
+  --runner-text: #e9f2ee;
+  --runner-accent: #8fd3c4;
+  --runner-play-bg: #eef6f3;
+  --runner-play-text: #0f201f;
+  --runner-play-shadow: 0 10px 30px -8px rgba(143,211,196,.5);
+  --runner-progress-track: rgba(233,242,238,.14);
+  --runner-caution-bg: rgba(214,120,90,.2);
+  --runner-caution-text: #f2c3b0;
+  --runner-caution-border: none;
+  --runner-chip-bg: rgba(233,242,238,.1);
+  --runner-chip-text: rgba(233,242,238,.8);
+  --runner-chip-border: transparent;
+  --runner-finish-halo: rgba(143,211,196,.14);
+  --runner-tile-shadow: 0 0 0 1px rgba(143,211,196,.18);
+  --runner-tile-bg: linear-gradient(160deg,#2c4a4c,#16292a);
+  --runner-glyph-strong: rgba(143,211,196,.85);
+  --runner-glyph-soft: rgba(143,211,196,.5);
+  --runner-side-badge-bg: #8fd3c4;
+  --runner-side-badge-text: #0f1f1e;
+  --runner-heading: #e9f2ee;
+  --runner-timer-color: #f2fbf7;
+  --runner-ring1: rgba(143,211,196,.22);
+  --runner-ring2: rgba(143,211,196,.42);
+  --runner-ring-glow: radial-gradient(circle, rgba(143,211,196,.16), transparent 72%);
+  --runner-orb-bg: radial-gradient(circle, rgba(143,211,196,.16), transparent 72%);
+  --runner-orb-ring: rgba(143,211,196,.42);
 }
 
 @layer base {

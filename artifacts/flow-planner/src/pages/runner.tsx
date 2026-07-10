@@ -12,42 +12,10 @@ import { Play, Pause, SkipForward, SkipBack, X, Bell, BellOff, Check, Moon, Sun 
 // ── Flow Runner — dual theme ────────────────────────────────────────────────
 //  • dark  = "Still Water"  (1A layout: small pose tile + breathing ring timer)
 //  • light = "Warm Studio"  (1B layout: large pose card + breathing orb timer)
-// Toggle sits in the top bar; the choice persists in localStorage.
+// Colors live in index.css as --runner-* tokens; the top-bar toggle flips the
+// app-wide .dark class on <html>, same as the rest of the app.
 
 const FONT = '"Montserrat", system-ui, sans-serif';
-
-const THEME = {
-  dark: {
-    bg: "radial-gradient(135% 80% at 50% -8%, #22383c 0%, #10201f 52%, #0a1414 100%)",
-    text: "#e9f2ee",
-    accent: "#8fd3c4",
-    playBg: "#eef6f3",
-    playText: "#0f201f",
-    playShadow: "0 10px 30px -8px rgba(143,211,196,.5)",
-    progressTrack: "rgba(233,242,238,.14)",
-    cautionBg: "rgba(214,120,90,.2)",
-    cautionText: "#f2c3b0",
-    chipBg: "rgba(233,242,238,.1)",
-    chipText: "rgba(233,242,238,.8)",
-    chipBorder: "transparent",
-    finishHalo: "rgba(143,211,196,.14)",
-  },
-  light: {
-    bg: "radial-gradient(120% 68% at 50% 2%, #fcf5ec 0%, #f2e7d7 58%, #ecdfcb 100%)",
-    text: "#322c26",
-    accent: "#c26744",
-    playBg: "#c26744",
-    playText: "#ffffff",
-    playShadow: "0 12px 28px -8px rgba(194,103,68,.6)",
-    progressTrack: "rgba(50,44,38,.12)",
-    cautionBg: "rgba(194,103,68,.13)",
-    cautionText: "#a4522f",
-    chipBg: "transparent",
-    chipText: "rgba(50,44,38,.7)",
-    chipBorder: "1px solid rgba(50,44,38,.15)",
-    finishHalo: "rgba(194,103,68,.14)",
-  },
-};
 
 // Single shared AudioContext. Mobile browsers create it "suspended" and it only
 // makes sound after being resumed inside a user gesture (e.g. tapping Play).
@@ -128,11 +96,9 @@ export default function Runner() {
   const { data: routine, isLoading: loadingRoutine } = useGetRoutine(Number(params.id));
   const { data: poses, isLoading: loadingPoses } = useListPoses();
 
-  const [mode, setMode] = useState<"dark" | "light">(
-    () => (typeof localStorage !== "undefined" && localStorage.getItem("flowRunnerTheme") === "light" ? "light" : "dark")
+  const [isDark, setIsDark] = useState(
+    () => typeof document !== "undefined" && document.documentElement.classList.contains("dark")
   );
-  useEffect(() => { try { localStorage.setItem("flowRunnerTheme", mode); } catch {} }, [mode]);
-  const t = THEME[mode];
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [chimeEnabled, setChimeEnabled] = useState(true);
@@ -235,12 +201,17 @@ export default function Runner() {
     else { setIsFinished(true); setIsPlaying(false); }
   };
   const handleSkipBack = () => { if (currentIndex > 0) setCurrentIndex((c) => c - 1); };
-  const toggleMode = () => setMode((m) => (m === "dark" ? "light" : "dark"));
+  const toggleMode = () => {
+    const root = document.documentElement;
+    const next = !root.classList.contains("dark");
+    root.classList.toggle("dark", next);
+    setIsDark(next);
+  };
 
-  const rootStyle: React.CSSProperties = { background: t.bg, color: t.text, fontFamily: FONT, height: "100dvh" };
+  const rootStyle: React.CSSProperties = { background: "var(--runner-bg)", color: "var(--runner-text)", fontFamily: FONT, height: "100dvh" };
 
   if (loadingRoutine || loadingPoses)
-    return <div className="fixed inset-0 flex items-center justify-center" style={{ ...rootStyle, color: t.accent }}>Loading…</div>;
+    return <div className="fixed inset-0 flex items-center justify-center" style={{ ...rootStyle, color: "var(--runner-accent)" }}>Loading…</div>;
   if (!routine || !poses)
     return <div className="fixed inset-0 flex items-center justify-center" style={rootStyle}>Not found</div>;
 
@@ -248,7 +219,7 @@ export default function Runner() {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center gap-6 p-10 text-center animate-in fade-in zoom-in duration-500" style={rootStyle}>
         {KEYFRAMES}
-        <div className="flex items-center justify-center rounded-full" style={{ width: 88, height: 88, background: t.finishHalo, color: t.accent }}>
+        <div className="flex items-center justify-center rounded-full" style={{ width: 88, height: 88, background: "var(--runner-finish-halo)", color: "var(--runner-accent)" }}>
           <Check className="w-10 h-10" strokeWidth={1.6} />
         </div>
         <div className="space-y-1.5">
@@ -256,7 +227,7 @@ export default function Runner() {
           <p className="text-sm" style={{ opacity: 0.68 }}>{routine.title}</p>
           <p className="text-sm" style={{ opacity: 0.68 }}>{Math.round(routine.totalSeconds / 60)} minutes of practice · well done</p>
         </div>
-        <button onClick={() => setLocation("/")} className="mt-2 px-8 py-3.5 rounded-full text-[13px] font-semibold uppercase tracking-[0.08em]" style={{ background: t.playBg, color: t.playText }}>
+        <button onClick={() => setLocation("/")} className="mt-2 px-8 py-3.5 rounded-full text-[13px] font-semibold uppercase tracking-[0.08em]" style={{ background: "var(--runner-play-bg)", color: "var(--runner-play-text)" }}>
           Done
         </button>
       </div>
@@ -267,7 +238,7 @@ export default function Runner() {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center gap-4 p-4" style={rootStyle}>
         <p>This routine has no poses.</p>
-        <button onClick={() => setLocation("/")} className="px-6 py-2.5 rounded-full" style={{ background: t.playBg, color: t.playText }}>Go back</button>
+        <button onClick={() => setLocation("/")} className="px-6 py-2.5 rounded-full" style={{ background: "var(--runner-play-bg)", color: "var(--runner-play-text)" }}>Go back</button>
       </div>
     );
   }
@@ -285,10 +256,10 @@ export default function Runner() {
       <button onClick={() => setLocation(`/routines/${routine.id}`)} className="p-1.5 -ml-1.5 opacity-60">
         <X className="w-5 h-5" strokeWidth={1.7} />
       </button>
-      <div className="text-[12px] font-semibold uppercase tracking-[0.22em]" style={{ color: t.accent }}>{e.sectionName}</div>
+      <div className="text-[12px] font-semibold uppercase tracking-[0.22em]" style={{ color: "var(--runner-accent)" }}>{e.sectionName}</div>
       <div className="flex items-center gap-1">
         <button onClick={toggleMode} className="p-1.5 opacity-60" title="Toggle theme">
-          {mode === "dark" ? <Sun className="w-5 h-5" strokeWidth={1.6} /> : <Moon className="w-5 h-5" strokeWidth={1.6} />}
+          {isDark ? <Sun className="w-5 h-5" strokeWidth={1.6} /> : <Moon className="w-5 h-5" strokeWidth={1.6} />}
         </button>
         <button onClick={() => setChimeEnabled(!chimeEnabled)} className="p-1.5 -mr-1.5" style={{ opacity: chimeEnabled ? 0.7 : 0.4 }}>
           {chimeEnabled ? <Bell className="w-5 h-5" strokeWidth={1.6} /> : <BellOff className="w-5 h-5" strokeWidth={1.6} />}
@@ -299,18 +270,18 @@ export default function Runner() {
 
   const Caption = (
     <div className="relative" style={{ width: 150, height: 16 }}>
-      <span className="absolute inset-0 text-[11px] font-semibold uppercase tracking-[0.28em]" style={{ color: t.text, opacity: 0.55, animation: "fp-in 8s ease-in-out infinite" }}>Inhale</span>
-      <span className="absolute inset-0 text-[11px] font-semibold uppercase tracking-[0.28em]" style={{ color: t.text, opacity: 0.55, animation: "fp-out 8s ease-in-out infinite" }}>Exhale</span>
+      <span className="absolute inset-0 text-[11px] font-semibold uppercase tracking-[0.28em]" style={{ color: "var(--runner-text)", opacity: 0.55, animation: "fp-in 8s ease-in-out infinite" }}>Inhale</span>
+      <span className="absolute inset-0 text-[11px] font-semibold uppercase tracking-[0.28em]" style={{ color: "var(--runner-text)", opacity: 0.55, animation: "fp-out 8s ease-in-out infinite" }}>Exhale</span>
     </div>
   );
 
   const Safety = hasSafety ? (
     <div className="flex flex-wrap gap-1.5 justify-center mb-5 shrink-0">
       {e.pose.cautions?.map((c: string) => (
-        <span key={c} className="text-[10.5px] font-medium px-2.5 py-[5px] rounded-lg" style={{ background: t.cautionBg, color: t.cautionText, border: mode === "light" ? "1px solid rgba(194,103,68,.25)" : "none" }}>Caution · {c}</span>
+        <span key={c} className="text-[10.5px] font-medium px-2.5 py-[5px] rounded-lg" style={{ background: "var(--runner-caution-bg)", color: "var(--runner-caution-text)", border: "var(--runner-caution-border)" }}>Caution · {c}</span>
       ))}
-      {e.pose.modification && <span className="text-[10.5px] font-medium px-2.5 py-[5px] rounded-lg" style={{ background: t.chipBg, color: t.chipText, border: t.chipBorder }}>Mod · {e.pose.modification}</span>}
-      {e.pose.chairOption && <span className="text-[10.5px] font-medium px-2.5 py-[5px] rounded-lg" style={{ background: t.chipBg, color: t.chipText, border: t.chipBorder }}>Chair · {e.pose.chairOption}</span>}
+      {e.pose.modification && <span className="text-[10.5px] font-medium px-2.5 py-[5px] rounded-lg" style={{ background: "var(--runner-chip-bg)", color: "var(--runner-chip-text)", border: "var(--runner-chip-border)" }}>Mod · {e.pose.modification}</span>}
+      {e.pose.chairOption && <span className="text-[10.5px] font-medium px-2.5 py-[5px] rounded-lg" style={{ background: "var(--runner-chip-bg)", color: "var(--runner-chip-text)", border: "var(--runner-chip-border)" }}>Chair · {e.pose.chairOption}</span>}
     </div>
   ) : null;
 
@@ -321,7 +292,7 @@ export default function Runner() {
           <SkipBack className="fill-current" style={{ width: 26, height: 26 }} />
         </button>
         <button aria-label={isPlaying ? "Pause" : "Play"} onClick={togglePlay} className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
-                style={{ width: 74, height: 74, background: t.playBg, color: t.playText, boxShadow: t.playShadow }}>
+                style={{ width: 74, height: 74, background: "var(--runner-play-bg)", color: "var(--runner-play-text)", boxShadow: "var(--runner-play-shadow)" }}>
           {isPlaying ? <Pause className="fill-current" style={{ width: 26, height: 26 }} /> : <Play className="fill-current" style={{ width: 28, height: 28, marginLeft: 3 }} />}
         </button>
         <button aria-label="Next pose" onClick={handleSkipNext} className="p-2 opacity-60 transition-opacity">
@@ -333,8 +304,8 @@ export default function Runner() {
           <span>Pose {currentIndex + 1} / {sequence.length}</span>
           <span>{Math.round(routine.totalSeconds / 60)} min flow</span>
         </div>
-        <div className="rounded-full overflow-hidden" style={{ height: 5, background: t.progressTrack }}>
-          <div style={{ width: `${pct}%`, height: "100%", background: t.accent, borderRadius: 999, transition: "width .8s linear" }} />
+        <div className="rounded-full overflow-hidden" style={{ height: 5, background: "var(--runner-progress-track)" }}>
+          <div style={{ width: `${pct}%`, height: "100%", background: "var(--runner-accent)", borderRadius: 999, transition: "width .8s linear" }} />
         </div>
       </div>
     </div>
@@ -343,34 +314,36 @@ export default function Runner() {
   const ringLayer: React.CSSProperties = { position: "absolute", borderRadius: "50%", animation: "fp-breathe 8s ease-in-out infinite" };
 
   // ── DARK layout (1A · Still Water) ────────────────────────────────────────
-  if (mode === "dark") {
+  if (isDark) {
     return (
       <div className="fixed inset-x-0 top-0 overflow-hidden flex flex-col px-6 pt-7 pb-8" style={rootStyle}>
         {KEYFRAMES}
         {TopBar}
-        <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center justify-center gap-5 text-center py-4">
-          <div className="relative overflow-hidden shrink-0" style={{ width: 150, height: 120, borderRadius: 20, boxShadow: "0 0 0 1px rgba(143,211,196,.18)",
-               background: poseImage ? `center/cover url(${poseImage})` : "linear-gradient(160deg,#2c4a4c,#16292a)" }}>
-            {!poseImage && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
-                <span className="text-[40px] font-light leading-none" style={{ color: "rgba(143,211,196,.85)" }}>{e.pose.name?.[0]}</span>
-                <span className="text-[9px] font-medium uppercase tracking-[0.18em]" style={{ color: "rgba(143,211,196,.5)" }}>{e.pose.category}</span>
-              </div>
-            )}
+        <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center text-center">
+          <div className="my-auto flex flex-col items-center gap-5 py-4 w-full">
+            <div className="relative overflow-hidden shrink-0" style={{ width: 150, height: 120, borderRadius: 20, boxShadow: "var(--runner-tile-shadow)",
+                 background: poseImage ? `center/cover url(${poseImage})` : "var(--runner-tile-bg)" }}>
+              {!poseImage && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+                  <span className="text-[40px] font-light leading-none" style={{ color: "var(--runner-glyph-strong)" }}>{e.pose.name?.[0]}</span>
+                  <span className="text-[9px] font-medium uppercase tracking-[0.18em]" style={{ color: "var(--runner-glyph-soft)" }}>{e.pose.category}</span>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col items-center gap-2.5">
+              <h2 className="text-[30px] font-light leading-[1.15]">{e.pose.name}</h2>
+              {e.side && <span className="text-[11px] font-semibold uppercase tracking-[0.22em] px-3 py-[5px] rounded-full" style={{ background: "var(--runner-side-badge-bg)", color: "var(--runner-side-badge-text)" }}>{e.side}</span>}
+            </div>
+            <div className="relative flex items-center justify-center shrink-0 aspect-square" style={{ width: 186, height: 186 }}>
+              <div style={{ ...ringLayer, inset: 0, border: "1px solid var(--runner-ring1)" }} />
+              <div style={{ ...ringLayer, inset: 26, border: "1px solid var(--runner-ring2)" }} />
+              <div style={{ ...ringLayer, inset: 48, background: "var(--runner-ring-glow)" }} />
+              <div className="relative text-[50px] font-light tabular-nums" style={{ color: "var(--runner-timer-color)" }}>{mmss}</div>
+            </div>
+            {Caption}
+            {isBreaths && e.breaths && <span className="text-[11px] font-medium uppercase tracking-[0.16em]" style={{ opacity: 0.5 }}>{e.breaths} breaths</span>}
+            {e.pose.cue && <p className="italic font-light leading-[1.55] text-[15px]" style={{ maxWidth: 280, opacity: 0.8 }}>{e.pose.cue}</p>}
           </div>
-          <div className="flex flex-col items-center gap-2.5">
-            <h2 className="text-[30px] font-light leading-[1.15]">{e.pose.name}</h2>
-            {e.side && <span className="text-[11px] font-semibold uppercase tracking-[0.22em] px-3 py-[5px] rounded-full" style={{ background: t.accent, color: "#0f1f1e" }}>{e.side}</span>}
-          </div>
-          <div className="relative flex items-center justify-center" style={{ width: 186, height: 186 }}>
-            <div style={{ ...ringLayer, inset: 0, border: "1px solid rgba(143,211,196,.22)" }} />
-            <div style={{ ...ringLayer, inset: 26, border: "1px solid rgba(143,211,196,.42)" }} />
-            <div style={{ ...ringLayer, inset: 48, background: "radial-gradient(circle, rgba(143,211,196,.16), transparent 72%)" }} />
-            <div className="relative text-[50px] font-light tabular-nums" style={{ color: "#f2fbf7" }}>{mmss}</div>
-          </div>
-          {Caption}
-          {isBreaths && e.breaths && <span className="text-[11px] font-medium uppercase tracking-[0.16em]" style={{ opacity: 0.5 }}>{e.breaths} breaths</span>}
-          {e.pose.cue && <p className="italic font-light leading-[1.55] text-[15px]" style={{ maxWidth: 280, opacity: 0.8 }}>{e.pose.cue}</p>}
         </div>
         {Safety}
         {Controls}
@@ -385,21 +358,21 @@ export default function Runner() {
       {TopBar}
       <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center gap-4 text-center py-4">
         {/* large pose card with name overlay */}
-        <div className="relative overflow-hidden shrink-0" style={{ width: 168, height: 134, borderRadius: 22, boxShadow: "0 14px 32px -18px rgba(120,90,60,.5)",
-             background: poseImage ? `center/cover url(${poseImage})` : "linear-gradient(150deg,#e6b48f,#c98a63)" }}>
+        <div className="relative overflow-hidden shrink-0" style={{ width: 168, height: 134, borderRadius: 22, boxShadow: "var(--runner-tile-shadow)",
+             background: poseImage ? `center/cover url(${poseImage})` : "var(--runner-tile-bg)" }}>
           {!poseImage && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
-              <span className="text-[42px] font-light leading-none" style={{ color: "rgba(253,247,239,.9)" }}>{e.pose.name?.[0]}</span>
-              <span className="text-[9px] font-medium uppercase tracking-[0.18em]" style={{ color: "rgba(253,247,239,.65)" }}>{e.pose.category}</span>
+              <span className="text-[42px] font-light leading-none" style={{ color: "var(--runner-glyph-strong)" }}>{e.pose.name?.[0]}</span>
+              <span className="text-[9px] font-medium uppercase tracking-[0.18em]" style={{ color: "var(--runner-glyph-soft)" }}>{e.pose.category}</span>
             </div>
           )}
-          {e.side && <span className="absolute top-2.5 left-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] px-2 py-0.5 rounded-full" style={{ background: "rgba(194,103,68,.92)", color: "#fff" }}>{e.side}</span>}
+          {e.side && <span className="absolute top-2.5 left-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] px-2 py-0.5 rounded-full" style={{ background: "var(--runner-side-badge-bg)", color: "var(--runner-side-badge-text)" }}>{e.side}</span>}
         </div>
-        <h2 className="text-[26px] font-normal leading-[1.12] shrink-0" style={{ color: "#2b2620" }}>{e.pose.name}</h2>
-        <div className="relative flex items-center justify-center shrink-0 mt-2" style={{ width: 172, height: 172 }}>
-          <div style={{ ...ringLayer, inset: 0, background: "radial-gradient(circle, rgba(194,103,68,.2), rgba(226,167,120,.1) 60%, transparent 74%)" }} />
-          <div style={{ ...ringLayer, inset: 30, border: "1.5px solid rgba(194,103,68,.3)" }} />
-          <div className="relative text-[48px] font-light tabular-nums" style={{ color: "#2b2620" }}>{mmss}</div>
+        <h2 className="text-[26px] font-normal leading-[1.12] shrink-0" style={{ color: "var(--runner-heading)" }}>{e.pose.name}</h2>
+        <div className="relative flex items-center justify-center shrink-0 aspect-square mt-2" style={{ width: 172, height: 172 }}>
+          <div style={{ ...ringLayer, inset: 0, background: "var(--runner-orb-bg)" }} />
+          <div style={{ ...ringLayer, inset: 30, border: "1.5px solid var(--runner-orb-ring)" }} />
+          <div className="relative text-[48px] font-light tabular-nums" style={{ color: "var(--runner-timer-color)" }}>{mmss}</div>
         </div>
         {Caption}
         {isBreaths && e.breaths && <span className="text-[11px] font-medium uppercase tracking-[0.16em]" style={{ opacity: 0.45 }}>{e.breaths} breaths</span>}
