@@ -7,7 +7,7 @@ import {
   getListSessionsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Play, Pause, SkipForward, SkipBack, X, Bell, BellOff, Check, Moon, Sun } from "lucide-react";
+import { Play, Pause, SkipForward, SkipBack, X, Bell, BellOff, Check, Moon, Sun, ChevronDown } from "lucide-react";
 
 // ── Flow Runner — dual theme ────────────────────────────────────────────────
 //  • dark  = "Still Water"  (1A layout: small pose tile + breathing ring timer)
@@ -84,9 +84,10 @@ function playChime() {
 
 const KEYFRAMES = (
   <style>{`
-    @keyframes fp-breathe { 0% { transform: scale(.78); } 50% { transform: scale(1.06); } 100% { transform: scale(.78); } }
+    @keyframes fp-halo { 0%,100% { transform: scale(.9); opacity: .5; } 50% { transform: scale(1.1); opacity: .85; } }
     @keyframes fp-in  { 0%,44% { opacity: 1; } 54%,100% { opacity: 0; } }
     @keyframes fp-out { 0%,44% { opacity: 0; } 54%,100% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { .fp-halo-pulse { animation: none !important; } }
   `}</style>
 );
 
@@ -105,6 +106,7 @@ export default function Runner() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
+  const [safetyOpen, setSafetyOpen] = useState(false);
 
   const queryClient = useQueryClient();
   const { mutate: createSession } = useCreateSession();
@@ -154,6 +156,11 @@ export default function Runner() {
   useEffect(() => {
     if (sequence.length > 0 && currentIndex < sequence.length) setTimeLeft(sequence[currentIndex].duration);
   }, [currentIndex, sequence]);
+
+  // Collapse the safety row by default on each new pose
+  useEffect(() => {
+    setSafetyOpen(false);
+  }, [currentIndex]);
 
   // Timer tick
   useEffect(() => {
@@ -247,7 +254,15 @@ export default function Runner() {
   const pct = (currentIndex / sequence.length) * 100;
   const isBreaths = e.pose.durationType === "breaths";
   const mmss = `${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, "0")}`;
-  const hasSafety = (e.pose.cautions?.length > 0) || e.pose.modification || e.pose.chairOption;
+  const safetyHasCautions = (e.pose.cautions?.length ?? 0) > 0;
+  const safetyHasDetails = !!(e.pose.modification || e.pose.chairOption);
+  const hasSafety = safetyHasCautions || safetyHasDetails;
+  // Circular progress ring around the play/pause button (time remaining for this pose)
+  const RING_SIZE = 88;
+  const RING_STROKE = 3;
+  const RING_R = (RING_SIZE - RING_STROKE) / 2;
+  const RING_C = 2 * Math.PI * RING_R;
+  const remainingFrac = e.duration > 0 ? Math.max(0, Math.min(1, timeLeft / e.duration)) : 0;
   const rawPoseImage: string | undefined = (e.pose as any).imageUrl ?? undefined;
   const poseImage: string | undefined = rawPoseImage
     ? (/^https?:\/\//.test(rawPoseImage) ? rawPoseImage : `/api/storage${rawPoseImage}`)
@@ -279,25 +294,49 @@ export default function Runner() {
   );
 
   const Safety = hasSafety ? (
-    <div className="flex flex-wrap gap-1.5 justify-center mb-5 shrink-0">
-      {e.pose.cautions?.map((c: string) => (
-        <span key={c} className="text-[10.5px] font-medium px-2.5 py-[5px] rounded-lg" style={{ background: "var(--runner-caution-bg)", color: "var(--runner-caution-text)", border: "var(--runner-caution-border)" }}>Caution · {c}</span>
-      ))}
-      {e.pose.modification && <span className="text-[10.5px] font-medium px-2.5 py-[5px] rounded-lg" style={{ background: "var(--runner-chip-bg)", color: "var(--runner-chip-text)", border: "var(--runner-chip-border)" }}>Mod · {e.pose.modification}</span>}
-      {e.pose.chairOption && <span className="text-[10.5px] font-medium px-2.5 py-[5px] rounded-lg" style={{ background: "var(--runner-chip-bg)", color: "var(--runner-chip-text)", border: "var(--runner-chip-border)" }}>Chair · {e.pose.chairOption}</span>}
+    <div className="flex flex-col items-center gap-1.5 mb-3 shrink-0">
+      {safetyHasCautions && (
+        <div className="flex flex-wrap gap-1.5 justify-center">
+          {e.pose.cautions?.map((c: string) => (
+            <span key={c} className="text-[10.5px] font-medium px-2.5 py-[5px] rounded-lg" style={{ background: "var(--runner-caution-bg)", color: "var(--runner-caution-text)", border: "var(--runner-caution-border)" }}>Caution · {c}</span>
+          ))}
+        </div>
+      )}
+      {safetyHasDetails && (
+        <div className="flex flex-col items-center gap-1.5">
+          <button onClick={() => setSafetyOpen((o) => !o)} aria-expanded={safetyOpen} className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--runner-text)", opacity: 0.6 }}>
+            Safety
+            <ChevronDown className="w-3.5 h-3.5 transition-transform" style={{ transform: safetyOpen ? "rotate(180deg)" : "none" }} />
+          </button>
+          {safetyOpen && (
+            <div className="flex flex-wrap gap-1.5 justify-center">
+              {e.pose.modification && <span className="text-[10.5px] font-medium px-2.5 py-[5px] rounded-lg" style={{ background: "var(--runner-chip-bg)", color: "var(--runner-chip-text)", border: "var(--runner-chip-border)" }}>Mod · {e.pose.modification}</span>}
+              {e.pose.chairOption && <span className="text-[10.5px] font-medium px-2.5 py-[5px] rounded-lg" style={{ background: "var(--runner-chip-bg)", color: "var(--runner-chip-text)", border: "var(--runner-chip-border)" }}>Chair · {e.pose.chairOption}</span>}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   ) : null;
 
   const Controls = (
-    <div className="flex flex-col gap-5 shrink-0">
+    <div className="flex flex-col gap-3 shrink-0">
+      <div className="text-center text-[15px] font-light tabular-nums leading-none" style={{ color: "var(--runner-timer-color)" }}>{mmss}</div>
       <div className="flex items-center justify-center gap-9">
         <button aria-label="Previous pose" onClick={handleSkipBack} disabled={currentIndex === 0} className="p-2 opacity-60 disabled:opacity-25 transition-opacity">
           <SkipBack className="fill-current" style={{ width: 26, height: 26 }} />
         </button>
-        <button aria-label={isPlaying ? "Pause" : "Play"} onClick={togglePlay} className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
-                style={{ width: 74, height: 74, background: "var(--runner-play-bg)", color: "var(--runner-play-text)", boxShadow: "var(--runner-play-shadow)" }}>
-          {isPlaying ? <Pause className="fill-current" style={{ width: 26, height: 26 }} /> : <Play className="fill-current" style={{ width: 28, height: 28, marginLeft: 3 }} />}
-        </button>
+        <div className="relative flex items-center justify-center" style={{ width: RING_SIZE, height: RING_SIZE }}>
+          <div className="fp-halo-pulse absolute rounded-full" style={{ inset: 7, background: "var(--runner-ring-glow)", animation: "fp-halo 8s ease-in-out infinite" }} />
+          <svg width={RING_SIZE} height={RING_SIZE} className="absolute inset-0" style={{ transform: "rotate(-90deg)" }}>
+            <circle cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R} fill="none" stroke="var(--runner-progress-track)" strokeWidth={RING_STROKE} />
+            <circle cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R} fill="none" stroke="var(--runner-accent)" strokeWidth={RING_STROKE} strokeLinecap="round" strokeDasharray={RING_C} strokeDashoffset={RING_C * (1 - remainingFrac)} style={{ transition: "stroke-dashoffset 1s linear" }} />
+          </svg>
+          <button aria-label={isPlaying ? "Pause" : "Play"} onClick={togglePlay} className="relative flex items-center justify-center rounded-full active:scale-95 transition-transform"
+                  style={{ width: 74, height: 74, background: "var(--runner-play-bg)", color: "var(--runner-play-text)", boxShadow: "var(--runner-play-shadow)" }}>
+            {isPlaying ? <Pause className="fill-current" style={{ width: 26, height: 26 }} /> : <Play className="fill-current" style={{ width: 28, height: 28, marginLeft: 3 }} />}
+          </button>
+        </div>
         <button aria-label="Next pose" onClick={handleSkipNext} className="p-2 opacity-60 transition-opacity">
           <SkipForward className="fill-current" style={{ width: 26, height: 26 }} />
         </button>
@@ -313,8 +352,6 @@ export default function Runner() {
       </div>
     </div>
   );
-
-  const ringLayer: React.CSSProperties = { position: "absolute", borderRadius: "50%", animation: "fp-breathe 8s ease-in-out infinite" };
 
   // ── DARK layout (1A · Still Water) ────────────────────────────────────────
   if (isDark) {
@@ -336,12 +373,6 @@ export default function Runner() {
             <div className="flex flex-col items-center gap-2.5">
               <h2 className="text-[30px] font-light leading-[1.15]">{e.pose.name}</h2>
               {e.side && <span className="text-[11px] font-semibold uppercase tracking-[0.22em] px-3 py-[5px] rounded-full" style={{ background: "var(--runner-side-badge-bg)", color: "var(--runner-side-badge-text)" }}>{e.side}</span>}
-            </div>
-            <div className="relative flex items-center justify-center shrink-0 aspect-square" style={{ width: 186, height: 186 }}>
-              <div style={{ ...ringLayer, inset: 0, border: "1px solid var(--runner-ring1)" }} />
-              <div style={{ ...ringLayer, inset: 26, border: "1px solid var(--runner-ring2)" }} />
-              <div style={{ ...ringLayer, inset: 48, background: "var(--runner-ring-glow)" }} />
-              <div className="relative text-[50px] font-light tabular-nums" style={{ color: "var(--runner-timer-color)" }}>{mmss}</div>
             </div>
             {Caption}
             {isBreaths && e.breaths && <span className="text-[11px] font-medium uppercase tracking-[0.16em]" style={{ opacity: 0.5 }}>{e.breaths} breaths</span>}
@@ -372,11 +403,6 @@ export default function Runner() {
           {e.side && <span className="absolute top-2.5 left-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] px-2 py-0.5 rounded-full" style={{ background: "var(--runner-side-badge-bg)", color: "var(--runner-side-badge-text)" }}>{e.side}</span>}
         </div>
         <h2 className="text-[26px] font-normal leading-[1.12] shrink-0" style={{ color: "var(--runner-heading)" }}>{e.pose.name}</h2>
-        <div className="relative flex items-center justify-center shrink-0 aspect-square mt-2" style={{ width: 172, height: 172 }}>
-          <div style={{ ...ringLayer, inset: 0, background: "var(--runner-orb-bg)" }} />
-          <div style={{ ...ringLayer, inset: 30, border: "1.5px solid var(--runner-orb-ring)" }} />
-          <div className="relative text-[48px] font-light tabular-nums" style={{ color: "var(--runner-timer-color)" }}>{mmss}</div>
-        </div>
         {Caption}
         {isBreaths && e.breaths && <span className="text-[11px] font-medium uppercase tracking-[0.16em]" style={{ opacity: 0.45 }}>{e.breaths} breaths</span>}
         {e.pose.cue && <p className="italic font-light leading-[1.55] text-[15px]" style={{ maxWidth: 290, opacity: 0.78 }}>{e.pose.cue}</p>}
