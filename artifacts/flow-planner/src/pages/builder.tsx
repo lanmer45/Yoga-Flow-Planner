@@ -680,7 +680,7 @@ export default function Builder() {
               <p className="text-xs text-muted-foreground">Changes apply everywhere this pose is used.</p>
             )}
           </DialogHeader>
-          <ScrollArea className="flex-1 min-h-0 px-4">
+          <div className="flex-1 min-h-0 overflow-y-auto px-4">
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label>Name *</Label>
@@ -799,7 +799,7 @@ export default function Builder() {
                 </Button>
               </div>
             </div>
-          </ScrollArea>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
