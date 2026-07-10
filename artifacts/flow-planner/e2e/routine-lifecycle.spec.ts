@@ -129,3 +129,31 @@ test("edit an existing routine and never silently fail to save", async ({ page }
   await page.waitForURL(/\/flows$/);
   await expect(page.getByText(newTitle, { exact: true })).toHaveCount(0);
 });
+
+test("prompts before losing unsaved edits on browser back", async ({ page }) => {
+  await page.goto("/flows");
+  await page.goto("/builder");
+  await expect(page.getByLabel("Flow Title")).toBeVisible();
+
+  await page.getByLabel("Flow Title").fill(uniqueTitle());
+  await page.waitForTimeout(200);
+
+  let dialogCount = 0;
+  page.once("dialog", (dialog) => {
+    dialogCount++;
+    dialog.dismiss().catch(() => {});
+  });
+  await page.goBack();
+  await page.waitForTimeout(400);
+  expect(dialogCount).toBe(1);
+  await expect(page).toHaveURL(/\/builder$/);
+
+  page.once("dialog", (dialog) => {
+    dialogCount++;
+    dialog.accept().catch(() => {});
+  });
+  await page.goBack();
+  await page.waitForTimeout(400);
+  expect(dialogCount).toBe(2);
+  await expect(page).toHaveURL(/\/flows$/);
+});

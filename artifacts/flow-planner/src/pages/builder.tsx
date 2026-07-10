@@ -110,6 +110,67 @@ export default function Builder() {
     }
   }, [isEdit, initialRoutine, initializedId]);
 
+  const isDirty = useMemo(() => {
+    if (isEdit) {
+      if (!initialRoutine || initializedId !== initialRoutine.id) return false;
+      const tagsEqual =
+        selectedTags.length === initialRoutine.tags.length &&
+        selectedTags.every((t, i) => t === initialRoutine.tags[i]);
+      return (
+        title !== initialRoutine.title ||
+        description !== (initialRoutine.description || "") ||
+        !tagsEqual ||
+        JSON.stringify(sections) !== JSON.stringify(initialRoutine.sections)
+      );
+    }
+    return (
+      title.trim() !== "" ||
+      description.trim() !== "" ||
+      selectedTags.length > 0 ||
+      sections.centering.length > 0 ||
+      sections.flow.length > 0 ||
+      sections.closing.length > 0
+    );
+  }, [isEdit, initialRoutine, initializedId, title, description, selectedTags, sections]);
+
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty && !saved) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isDirty, saved]);
+
+  useEffect(() => {
+    if (!isDirty || saved) return;
+    window.history.pushState(null, "", window.location.href);
+    const handlePopState = () => {
+      if (window.confirm("You have unsaved changes. Are you sure you want to leave? Your changes will be lost.")) {
+        window.removeEventListener("popstate", handlePopState);
+        window.history.back();
+      } else {
+        window.history.pushState(null, "", window.location.href);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [isDirty, saved]);
+
+  const cancelHref = isEdit ? `/routines/${params.id}` : "/flows";
+
+  const handleCancel = (e: React.MouseEvent) => {
+    if (isDirty && !saved) {
+      if (!window.confirm("You have unsaved changes. Are you sure you want to leave? Your changes will be lost.")) {
+        e.preventDefault();
+      }
+    }
+  };
+
   if ((isEdit && loadingRoutine) || loadingPoses || loadingTags) {
     return <div className="p-8 text-center text-muted-foreground">Loading builder...</div>;
   }
@@ -127,6 +188,7 @@ export default function Builder() {
     if (isEdit && params.id) {
       updateRoutine.mutate({ id: Number(params.id), data: payload }, {
         onSuccess: () => {
+          setSaved(true);
           queryClient.invalidateQueries({ queryKey: ["/api/routines"] });
           setLocation(`/routines/${params.id}`);
         }
@@ -134,6 +196,7 @@ export default function Builder() {
     } else {
       createRoutine.mutate({ data: payload }, {
         onSuccess: (newRoutine) => {
+          setSaved(true);
           queryClient.invalidateQueries({ queryKey: ["/api/routines"] });
           setLocation(`/routines/${newRoutine.id}`);
         }
@@ -495,7 +558,7 @@ export default function Builder() {
   return (
     <div className="max-w-md mx-auto p-4 pb-24 space-y-6">
       <div className="flex items-center justify-between bg-background/80 backdrop-blur-md sticky top-0 z-10 pt-2 pb-4 -mx-4 px-4 border-b border-border/50">
-        <Link href={isEdit ? `/routines/${params.id}` : "/flows"} className="text-sm font-medium text-muted-foreground hover:text-primary">
+        <Link href={cancelHref} onClick={handleCancel} className="text-sm font-medium text-muted-foreground hover:text-primary">
           Cancel
         </Link>
         <div className="text-sm font-semibold bg-secondary/10 text-secondary px-3 py-1 rounded-full">
