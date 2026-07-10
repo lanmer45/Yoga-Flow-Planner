@@ -85,9 +85,13 @@ function playChime() {
 const KEYFRAMES = (
   <style>{`
     @keyframes fp-halo { 0%,100% { transform: scale(.9); opacity: .5; } 50% { transform: scale(1.1); opacity: .85; } }
+    @keyframes fp-breath-bg { 0%,100% { opacity: .15; } 50% { opacity: .55; } }
     @keyframes fp-in  { 0%,44% { opacity: 1; } 54%,100% { opacity: 0; } }
     @keyframes fp-out { 0%,44% { opacity: 0; } 54%,100% { opacity: 1; } }
-    @media (prefers-reduced-motion: reduce) { .fp-halo-pulse { animation: none !important; } }
+    @media (prefers-reduced-motion: reduce) {
+      .fp-halo-pulse { animation: none !important; }
+      .fp-breath-bg { animation: none !important; opacity: .15 !important; }
+    }
   `}</style>
 );
 
@@ -269,6 +273,20 @@ export default function Runner() {
     : undefined;
 
   // ── Shared fragments ──────────────────────────────────────────────────────
+  const BreathGlow = (
+    <div
+      className="fixed inset-0 pointer-events-none fp-breath-bg"
+      aria-hidden="true"
+      style={{
+        zIndex: -1,
+        background: "var(--runner-breath-glow)",
+        opacity: 0.15,
+        animation: "fp-breath-bg 8s ease-in-out infinite",
+        animationPlayState: isPlaying ? "running" : "paused",
+      }}
+    />
+  );
+
   const TopBar = (
     <div className="flex items-center justify-between shrink-0">
       <button onClick={() => setLocation(`/routines/${routine.id}`)} className="p-1.5 -ml-1.5 opacity-60">
@@ -327,7 +345,7 @@ export default function Runner() {
           <SkipBack className="fill-current" style={{ width: 26, height: 26 }} />
         </button>
         <div className="relative flex items-center justify-center" style={{ width: RING_SIZE, height: RING_SIZE }}>
-          <div className="fp-halo-pulse absolute rounded-full" style={{ inset: 7, background: "var(--runner-ring-glow)", animation: "fp-halo 8s ease-in-out infinite" }} />
+          <div className="fp-halo-pulse absolute rounded-full" style={{ inset: 7, background: "var(--runner-ring-glow)", animation: "fp-halo 8s ease-in-out infinite", animationPlayState: isPlaying ? "running" : "paused" }} />
           <svg width={RING_SIZE} height={RING_SIZE} className="absolute inset-0" style={{ transform: "rotate(-90deg)" }}>
             <circle cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R} fill="none" stroke="var(--runner-progress-track)" strokeWidth={RING_STROKE} />
             <circle cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R} fill="none" stroke="var(--runner-accent)" strokeWidth={RING_STROKE} strokeLinecap="round" strokeDasharray={RING_C} strokeDashoffset={RING_C * (1 - remainingFrac)} style={{ transition: "stroke-dashoffset 1s linear" }} />
@@ -358,6 +376,7 @@ export default function Runner() {
     return (
       <div className="fixed inset-x-0 top-0 overflow-hidden flex flex-col px-6 pt-7 pb-8" style={rootStyle}>
         {KEYFRAMES}
+        {BreathGlow}
         {TopBar}
         <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center text-center">
           <div className="my-auto flex flex-col items-center gap-5 py-4 w-full">
@@ -389,6 +408,7 @@ export default function Runner() {
   return (
     <div className="fixed inset-x-0 top-0 overflow-hidden flex flex-col px-6 pt-6 pb-8" style={rootStyle}>
       {KEYFRAMES}
+      {BreathGlow}
       {TopBar}
       <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center gap-4 text-center py-4">
         {/* large pose card with name overlay */}
