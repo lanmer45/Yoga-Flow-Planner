@@ -25,3 +25,5 @@ export * from './session';
 export * from './sessionInput';
 export * from './tagLabel';
 export * from './tagLabelInput';
+export * from './uploadUrlRequest';
+export * from './uploadUrlResponse';

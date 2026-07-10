@@ -32,6 +32,7 @@ export const ListPosesResponseItem = zod.object({
   "cautions": zod.array(zod.enum(['Back', 'Knees', 'Wrists', 'Neck', 'Shoulders', 'Hips', 'Balance'])),
   "modification": zod.string(),
   "chairOption": zod.string(),
+  "imageUrl": zod.string().nullish(),
   "isCustom": zod.boolean()
 })
 export const ListPosesResponse = zod.array(ListPosesResponseItem)
@@ -55,7 +56,8 @@ export const CreatePoseBody = zod.object({
   "cue": zod.string(),
   "cautions": zod.array(zod.enum(['Back', 'Knees', 'Wrists', 'Neck', 'Shoulders', 'Hips', 'Balance'])),
   "modification": zod.string(),
-  "chairOption": zod.string()
+  "chairOption": zod.string(),
+  "imageUrl": zod.string().nullish()
 })
 
 export const CreatePoseResponse = zod.object({
@@ -70,6 +72,7 @@ export const CreatePoseResponse = zod.object({
   "cautions": zod.array(zod.enum(['Back', 'Knees', 'Wrists', 'Neck', 'Shoulders', 'Hips', 'Balance'])),
   "modification": zod.string(),
   "chairOption": zod.string(),
+  "imageUrl": zod.string().nullish(),
   "isCustom": zod.boolean()
 })
 
@@ -96,7 +99,8 @@ export const UpdatePoseBody = zod.object({
   "cue": zod.string(),
   "cautions": zod.array(zod.enum(['Back', 'Knees', 'Wrists', 'Neck', 'Shoulders', 'Hips', 'Balance'])),
   "modification": zod.string(),
-  "chairOption": zod.string()
+  "chairOption": zod.string(),
+  "imageUrl": zod.string().nullish()
 })
 
 export const UpdatePoseResponse = zod.object({
@@ -111,8 +115,61 @@ export const UpdatePoseResponse = zod.object({
   "cautions": zod.array(zod.enum(['Back', 'Knees', 'Wrists', 'Neck', 'Shoulders', 'Hips', 'Balance'])),
   "modification": zod.string(),
   "chairOption": zod.string(),
+  "imageUrl": zod.string().nullish(),
   "isCustom": zod.boolean()
 })
+
+
+/**
+ * Returns a presigned GCS URL for direct upload. The client sends JSON
+ * metadata here, then uploads the file directly to the returned URL.
+ * @summary Request a presigned URL for file upload
+ */
+
+
+
+
+
+export const RequestUploadUrlBody = zod.object({
+  "name": zod.string().min(1),
+  "size": zod.number().min(1),
+  "contentType": zod.string().min(1)
+})
+
+
+
+
+
+
+export const RequestUploadUrlResponse = zod.object({
+  "uploadURL": zod.string().url(),
+  "objectPath": zod.string(),
+  "metadata": zod.object({
+  "name": zod.string().min(1),
+  "size": zod.number().min(1),
+  "contentType": zod.string().min(1)
+}).optional()
+})
+
+
+/**
+ * @summary Serve a public asset from PUBLIC_OBJECT_SEARCH_PATHS
+ */
+export const GetPublicObjectParams = zod.object({
+  "filePath": zod.coerce.string()
+})
+
+export const GetPublicObjectResponse = zod.unknown()
+
+
+/**
+ * @summary Serve an object entity from PRIVATE_OBJECT_DIR
+ */
+export const GetStorageObjectParams = zod.object({
+  "objectPath": zod.coerce.string()
+})
+
+export const GetStorageObjectResponse = zod.unknown()
 
 
 /**

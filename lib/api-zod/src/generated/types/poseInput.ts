@@ -23,4 +23,6 @@ export interface PoseInput {
   cautions: PoseInputCautionsItem[];
   modification: string;
   chairOption: string;
+  /** @nullable */
+  imageUrl?: string | null;
 }

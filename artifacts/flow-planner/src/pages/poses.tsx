@@ -18,6 +18,10 @@ import { Search, ChevronLeft } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useUpload } from "@workspace/object-storage-web";
+import { ImagePlus, X, Loader2 } from "lucide-react";
+
+const imageSrc = (path: string) => (/^https?:\/\//.test(path) ? path : `/api/storage${path}`);
 
 const CATEGORIES = ["All", "Centering", "Warm-Up", "Standing", "Backbend", "Twist", "Hip", "Floor", "Rest", "Closing"];
 const CAUTIONS = ["Back", "Knees", "Wrists", "Neck", "Shoulders", "Hips", "Balance"];
@@ -33,6 +37,7 @@ const emptyPose = {
   cautions: [] as PoseInputCautionsItem[],
   modification: "",
   chairOption: "",
+  imageUrl: null as string | null,
 };
 
 export default function Poses() {
@@ -48,6 +53,17 @@ export default function Poses() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPoseId, setEditingPoseId] = useState<number | null>(null);
   const [newPose, setNewPose] = useState({ ...emptyPose });
+
+  const { uploadFile, isUploading } = useUpload({
+    onSuccess: (res) => setNewPose((prev) => ({ ...prev, imageUrl: res.objectPath })),
+    onError: () => alert("Image upload failed. Please try again."),
+  });
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) uploadFile(file);
+    e.target.value = "";
+  };
 
   const resetForm = () => {
     setEditingPoseId(null);
@@ -72,6 +88,7 @@ export default function Poses() {
       cautions: [...pose.cautions],
       modification: pose.modification ?? "",
       chairOption: pose.chairOption ?? "",
+      imageUrl: pose.imageUrl ?? null,
     });
     setIsDialogOpen(true);
   };
@@ -217,6 +234,37 @@ export default function Poses() {
               <div className="space-y-2">
                 <Label>Name *</Label>
                 <Input value={newPose.name} onChange={(e) => setNewPose({ ...newPose, name: e.target.value })} placeholder="Pose name" />
+              </div>
+              <div className="space-y-2">
+                <Label>Image (Optional)</Label>
+                {newPose.imageUrl ? (
+                  <div className="relative w-full aspect-video rounded-lg overflow-hidden border bg-muted">
+                    <img src={imageSrc(newPose.imageUrl)} alt="Pose" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setNewPose({ ...newPose, imageUrl: null })}
+                      className="absolute top-2 right-2 bg-background/80 backdrop-blur rounded-full p-1 shadow"
+                      aria-label="Remove image"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center gap-2 w-full aspect-video rounded-lg border border-dashed cursor-pointer bg-muted/40 hover:bg-muted transition-colors text-muted-foreground">
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                        <span className="text-xs">Uploading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <ImagePlus className="w-6 h-6" />
+                        <span className="text-xs">Tap to upload an image</span>
+                      </>
+                    )}
+                    <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} disabled={isUploading} />
+                  </label>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Category</Label>

@@ -27,6 +27,10 @@ import { Search, Plus, X, ArrowUp, ArrowDown, Move } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useUpload } from "@workspace/object-storage-web";
+import { ImagePlus, Loader2 } from "lucide-react";
+
+const poseImageSrc = (path: string) => (/^https?:\/\//.test(path) ? path : `/api/storage${path}`);
 
 const CATEGORY_RANKS: Record<string, number> = {
   'Centering': 0,
@@ -96,8 +100,20 @@ export default function Builder() {
     cue: "",
     cautions: [] as PoseInputCautionsItem[],
     modification: "",
-    chairOption: ""
+    chairOption: "",
+    imageUrl: null as string | null
   });
+
+  const { uploadFile: uploadPoseImage, isUploading: isImageUploading } = useUpload({
+    onSuccess: (res) => setNewPose((prev) => ({ ...prev, imageUrl: res.objectPath })),
+    onError: () => alert("Image upload failed. Please try again."),
+  });
+
+  const handlePoseImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) uploadPoseImage(file);
+    e.target.value = "";
+  };
 
   // Initialize form once per loaded routine
   const [initializedId, setInitializedId] = useState<number | null>(null);
@@ -240,7 +256,8 @@ export default function Builder() {
       cue: "",
       cautions: [],
       modification: "",
-      chairOption: ""
+      chairOption: "",
+      imageUrl: null
     });
   };
 
@@ -256,7 +273,8 @@ export default function Builder() {
       cue: "",
       cautions: [],
       modification: "",
-      chairOption: ""
+      chairOption: "",
+      imageUrl: null
     }));
     setIsPoseDialogOpen(true);
   };
@@ -273,7 +291,8 @@ export default function Builder() {
       cue: pose.cue ?? "",
       cautions: [...pose.cautions],
       modification: pose.modification ?? "",
-      chairOption: pose.chairOption ?? ""
+      chairOption: pose.chairOption ?? "",
+      imageUrl: pose.imageUrl ?? null
     };
     setNewPose(initial);
     setPoseFormSnapshot(JSON.stringify(initial));
@@ -666,6 +685,37 @@ export default function Builder() {
               <div className="space-y-2">
                 <Label>Name *</Label>
                 <Input value={newPose.name} onChange={e => setNewPose({...newPose, name: e.target.value})} placeholder="Pose name" />
+              </div>
+              <div className="space-y-2">
+                <Label>Image (Optional)</Label>
+                {newPose.imageUrl ? (
+                  <div className="relative w-full aspect-video rounded-lg overflow-hidden border bg-muted">
+                    <img src={poseImageSrc(newPose.imageUrl)} alt="Pose" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setNewPose({ ...newPose, imageUrl: null })}
+                      className="absolute top-2 right-2 bg-background/80 backdrop-blur rounded-full p-1 shadow"
+                      aria-label="Remove image"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center gap-2 w-full aspect-video rounded-lg border border-dashed cursor-pointer bg-muted/40 hover:bg-muted transition-colors text-muted-foreground">
+                    {isImageUploading ? (
+                      <>
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                        <span className="text-xs">Uploading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <ImagePlus className="w-6 h-6" />
+                        <span className="text-xs">Tap to upload an image</span>
+                      </>
+                    )}
+                    <input type="file" accept="image/*" className="hidden" onChange={handlePoseImageChange} disabled={isImageUploading} />
+                  </label>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Category</Label>

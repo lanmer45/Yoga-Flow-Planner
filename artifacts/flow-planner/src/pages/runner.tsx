@@ -248,7 +248,10 @@ export default function Runner() {
   const isBreaths = e.pose.durationType === "breaths";
   const mmss = `${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, "0")}`;
   const hasSafety = (e.pose.cautions?.length > 0) || e.pose.modification || e.pose.chairOption;
-  const poseImage: string | undefined = (e.pose as any).imageUrl;
+  const rawPoseImage: string | undefined = (e.pose as any).imageUrl ?? undefined;
+  const poseImage: string | undefined = rawPoseImage
+    ? (/^https?:\/\//.test(rawPoseImage) ? rawPoseImage : `/api/storage${rawPoseImage}`)
+    : undefined;
 
   // ── Shared fragments ──────────────────────────────────────────────────────
   const TopBar = (

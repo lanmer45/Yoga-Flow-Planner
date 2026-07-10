@@ -22,5 +22,7 @@ export interface Pose {
   cautions: PoseCautionsItem[];
   modification: string;
   chairOption: string;
+  /** @nullable */
+  imageUrl?: string | null;
   isCustom: boolean;
 }

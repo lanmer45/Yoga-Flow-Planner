@@ -14,6 +14,7 @@ export const posesTable = pgTable("poses", {
   cautions: jsonb("cautions").$type<string[]>().notNull().default([]),
   modification: text("modification").notNull(),
   chairOption: text("chair_option").notNull(),
+  imageUrl: text("image_url"),
   isCustom: boolean("is_custom").notNull().default(false),
 });
 
