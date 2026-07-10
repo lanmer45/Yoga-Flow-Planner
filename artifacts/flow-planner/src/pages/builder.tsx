@@ -85,6 +85,7 @@ export default function Builder() {
   
   const [isPoseDialogOpen, setIsPoseDialogOpen] = useState(false);
   const [editingPoseId, setEditingPoseId] = useState<number | null>(null);
+  const [poseFormSnapshot, setPoseFormSnapshot] = useState<string>("");
   const [newPose, setNewPose] = useState({
     name: "",
     category: "Centering" as PoseInputCategory,
@@ -245,12 +246,24 @@ export default function Builder() {
 
   const openCreatePose = () => {
     resetPoseForm();
+    setPoseFormSnapshot(JSON.stringify({
+      name: "",
+      category: "Centering",
+      durationType: "time",
+      defaultDurationSeconds: 30,
+      defaultBreaths: 5,
+      perSide: false,
+      cue: "",
+      cautions: [],
+      modification: "",
+      chairOption: ""
+    }));
     setIsPoseDialogOpen(true);
   };
 
   const openEditPose = (pose: any) => {
     setEditingPoseId(pose.id);
-    setNewPose({
+    const initial = {
       name: pose.name,
       category: pose.category,
       durationType: pose.durationType,
@@ -261,7 +274,9 @@ export default function Builder() {
       cautions: [...pose.cautions],
       modification: pose.modification ?? "",
       chairOption: pose.chairOption ?? ""
-    });
+    };
+    setNewPose(initial);
+    setPoseFormSnapshot(JSON.stringify(initial));
     setIsPoseDialogOpen(true);
   };
 
@@ -627,7 +642,18 @@ export default function Builder() {
       {renderSectionBuilder("flow", "Flow")}
       {renderSectionBuilder("closing", "Closing")}
 
-      <Dialog open={isPoseDialogOpen} onOpenChange={(open) => { setIsPoseDialogOpen(open); if (!open) resetPoseForm(); }}>
+      <Dialog open={isPoseDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          const isPoseDirty = JSON.stringify(newPose) !== poseFormSnapshot;
+          if (isPoseDirty && !window.confirm("You have unsaved changes. Are you sure you want to close? Your changes will be lost.")) {
+            return;
+          }
+          setIsPoseDialogOpen(false);
+          resetPoseForm();
+        } else {
+          setIsPoseDialogOpen(true);
+        }
+      }}>
         <DialogContent className="max-h-[90vh] overflow-hidden flex flex-col p-0">
           <DialogHeader className="px-4 pt-4 shrink-0">
             <DialogTitle>{editingPoseId != null ? "Edit Pose" : "Add Custom Pose"}</DialogTitle>
