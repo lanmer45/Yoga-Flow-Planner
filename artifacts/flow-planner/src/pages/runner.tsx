@@ -317,14 +317,14 @@ export default function Runner() {
   const Controls = (
     <div className="flex flex-col gap-5 shrink-0">
       <div className="flex items-center justify-center gap-9">
-        <button onClick={handleSkipBack} disabled={currentIndex === 0} className="p-2 opacity-60 disabled:opacity-25 transition-opacity">
+        <button aria-label="Previous pose" onClick={handleSkipBack} disabled={currentIndex === 0} className="p-2 opacity-60 disabled:opacity-25 transition-opacity">
           <SkipBack className="fill-current" style={{ width: 26, height: 26 }} />
         </button>
-        <button onClick={togglePlay} className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
+        <button aria-label={isPlaying ? "Pause" : "Play"} onClick={togglePlay} className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
                 style={{ width: 74, height: 74, background: t.playBg, color: t.playText, boxShadow: t.playShadow }}>
           {isPlaying ? <Pause className="fill-current" style={{ width: 26, height: 26 }} /> : <Play className="fill-current" style={{ width: 28, height: 28, marginLeft: 3 }} />}
         </button>
-        <button onClick={handleSkipNext} className="p-2 opacity-60 transition-opacity">
+        <button aria-label="Next pose" onClick={handleSkipNext} className="p-2 opacity-60 transition-opacity">
           <SkipForward className="fill-current" style={{ width: 26, height: 26 }} />
         </button>
       </div>

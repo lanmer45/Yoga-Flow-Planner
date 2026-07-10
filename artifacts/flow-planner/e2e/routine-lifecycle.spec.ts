@@ -48,28 +48,31 @@ test("create, save, run, and delete a routine end-to-end", async ({ page }) => {
   const poseHeading = page.locator("h2").first();
   await expect(poseHeading).toBeVisible();
   const firstPoseName = (await poseHeading.textContent())?.trim();
-  await expect(page.getByText(/Pose 1 of \d+/)).toBeVisible();
-
-  const controls = page.locator("div.flex.items-center.justify-center.gap-8");
-  const playPause = controls.locator("button").nth(1);
-  const skipForward = controls.locator("button").nth(2);
-
-  await playPause.click();
-  await page.waitForTimeout(1500);
-  await playPause.click();
-
-  await expect(page.getByText(/Pose 1 of \d+/)).toBeVisible();
-  await skipForward.click();
-  await expect(page.getByText(/Pose 2 of \d+/)).toBeVisible();
   expect(firstPoseName).toBeTruthy();
+  await expect(page.getByText(/Pose 1 \/ \d+/)).toBeVisible();
+
+  // Skip forward advances deterministically while the player is paused
+  // (no reliance on the countdown timer, which made this step flaky before).
+  await page.getByRole("button", { name: "Next pose" }).click();
+  await expect(page.getByText(/Pose 2 \/ \d+/)).toBeVisible();
+
+  // Skip back returns to the first pose.
+  await page.getByRole("button", { name: "Previous pose" }).click();
+  await expect(page.getByText(/Pose 1 \/ \d+/)).toBeVisible();
+
+  // Play/pause is verified via the control's own state, not by waiting for
+  // the timer to tick, so it never depends on a pose's duration.
+  await page.getByRole("button", { name: "Play" }).click();
+  await expect(page.getByRole("button", { name: "Pause" })).toBeVisible();
+  await page.getByRole("button", { name: "Pause" }).click();
+  await expect(page.getByRole("button", { name: "Play" })).toBeVisible();
 
   await page.goto(`/routines/${routineId}`);
   await page.locator("button.text-destructive").click();
   await expect(page.getByRole("alertdialog").getByText("Delete Flow?")).toBeVisible();
   await page.getByRole("button", { name: "Delete", exact: true }).click();
 
-  await page.waitForURL(/\/$|\/$/);
-  await expect(page).toHaveURL(/\/$/);
+  await page.waitForURL(/\/flows$/);
   await expect(page.getByText(title, { exact: true })).toHaveCount(0);
 });
 
