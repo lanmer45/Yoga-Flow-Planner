@@ -133,6 +133,47 @@ test("edit an existing routine and never silently fail to save", async ({ page }
   await expect(page.getByText(newTitle, { exact: true })).toHaveCount(0);
 });
 
+test("running a flow to completion records a session and shows the summary", async ({ page }) => {
+  const title = uniqueTitle();
+
+  // --- Seed a short routine ---
+  await page.goto("/builder");
+  await expect(page.getByLabel("Flow Title")).toBeVisible();
+  await page.getByLabel("Flow Title").fill(title);
+  await addPoseToSection(page, 0);
+  await page.getByRole("button", { name: "Save" }).click();
+  await page.waitForURL(/\/routines\/\d+$/);
+  const routineId = page.url().match(/\/routines\/(\d+)$/)![1];
+
+  // --- Run the flow to completion ---
+  await page.goto(`/run/${routineId}`);
+  const counter = page.getByText(/Pose 1 \/ \d+/);
+  await expect(counter).toBeVisible();
+  const total = Number((await counter.textContent())!.match(/Pose 1 \/ (\d+)/)![1]);
+  expect(total).toBeGreaterThan(0);
+
+  // Advancing past the last pose triggers the finish state.
+  for (let i = 0; i < total; i++) {
+    await page.getByRole("button", { name: "Next pose" }).click();
+  }
+
+  // --- Assert the "Session complete" summary appears with the routine title ---
+  await expect(page.getByRole("heading", { name: "Session complete" })).toBeVisible();
+  await expect(page.getByText(title, { exact: true })).toBeVisible();
+
+  // --- Verify a session record was created and appears in History ---
+  await page.getByRole("button", { name: "Done" }).click();
+  await page.goto("/history");
+  await expect(page.getByText(title, { exact: true })).toBeVisible();
+
+  // --- Cleanup ---
+  await page.goto(`/routines/${routineId}`);
+  await page.locator("button.text-destructive").click();
+  await expect(page.getByRole("alertdialog").getByText("Delete Flow?")).toBeVisible();
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await page.waitForURL(/\/flows$/);
+});
+
 test("prompts before losing unsaved edits on browser back", async ({ page }) => {
   await page.goto("/flows");
   await page.goto("/builder");
