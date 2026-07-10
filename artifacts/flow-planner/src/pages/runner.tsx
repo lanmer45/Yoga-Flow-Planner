@@ -85,12 +85,14 @@ function playChime() {
 const KEYFRAMES = (
   <style>{`
     @keyframes fp-halo { 0%,100% { transform: scale(.9); opacity: .5; } 50% { transform: scale(1.1); opacity: .85; } }
-    @keyframes fp-breath-bg { 0%,100% { opacity: .3; } 50% { opacity: .6; } }
+    @keyframes fp-breath-edge { 0%,100% { opacity: .5; } 50% { opacity: .1; } }
+    @keyframes fp-breath-core { 0%,100% { opacity: 0; } 50% { opacity: .5; } }
     @keyframes fp-in  { 0%,44% { opacity: 1; } 54%,100% { opacity: 0; } }
     @keyframes fp-out { 0%,44% { opacity: 0; } 54%,100% { opacity: 1; } }
     @media (prefers-reduced-motion: reduce) {
       .fp-halo-pulse { animation: none !important; }
-      .fp-breath-bg { animation: none !important; opacity: .3 !important; }
+      .fp-breath-edge { animation: none !important; opacity: .4 !important; }
+      .fp-breath-core { animation: none !important; opacity: 0 !important; }
     }
   `}</style>
 );
@@ -274,17 +276,32 @@ export default function Runner() {
 
   // ── Shared fragments ──────────────────────────────────────────────────────
   const BreathGlow = (
-    <div
-      className="fixed inset-0 pointer-events-none fp-breath-bg"
-      aria-hidden="true"
-      style={{
-        zIndex: -1,
-        background: "var(--runner-breath-glow)",
-        opacity: 0.3,
-        animation: "fp-breath-bg 8s ease-in-out infinite",
-        animationPlayState: isPlaying ? "running" : "paused",
-      }}
-    />
+    <>
+      {/* exhale — breath out to the corners (edge vignette, peaks at rest) */}
+      <div
+        className="fixed inset-0 pointer-events-none fp-breath-edge"
+        aria-hidden="true"
+        style={{
+          zIndex: -1,
+          background: "var(--runner-breath-glow)",
+          opacity: 0.5,
+          animation: "fp-breath-edge 8s ease-in-out infinite",
+          animationPlayState: isPlaying ? "running" : "paused",
+        }}
+      />
+      {/* inhale — breath drawn into the center (soft central bloom, peaks mid-cycle) */}
+      <div
+        className="fixed inset-0 pointer-events-none fp-breath-core"
+        aria-hidden="true"
+        style={{
+          zIndex: -1,
+          background: "var(--runner-breath-core)",
+          opacity: 0,
+          animation: "fp-breath-core 8s ease-in-out infinite",
+          animationPlayState: isPlaying ? "running" : "paused",
+        }}
+      />
+    </>
   );
 
   const TopBar = (
@@ -306,8 +323,8 @@ export default function Runner() {
 
   const Caption = (
     <div className="relative" style={{ width: 150, height: 16 }}>
-      <span className="absolute inset-0 text-[11px] font-semibold uppercase tracking-[0.28em]" style={{ color: "var(--runner-text)", opacity: 0.55, animation: "fp-in 8s ease-in-out infinite" }}>Inhale</span>
-      <span className="absolute inset-0 text-[11px] font-semibold uppercase tracking-[0.28em]" style={{ color: "var(--runner-text)", opacity: 0.55, animation: "fp-out 8s ease-in-out infinite" }}>Exhale</span>
+      <span className="absolute inset-0 text-[11px] font-semibold uppercase tracking-[0.28em]" style={{ color: "var(--runner-text)", opacity: 0.55, animation: "fp-in 8s ease-in-out infinite", animationPlayState: isPlaying ? "running" : "paused" }}>Inhale</span>
+      <span className="absolute inset-0 text-[11px] font-semibold uppercase tracking-[0.28em]" style={{ color: "var(--runner-text)", opacity: 0.55, animation: "fp-out 8s ease-in-out infinite", animationPlayState: isPlaying ? "running" : "paused" }}>Exhale</span>
     </div>
   );
 
