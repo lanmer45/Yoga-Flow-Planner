@@ -193,7 +193,7 @@
   --runner-ring-glow: radial-gradient(circle, rgba(194,103,68,.2), transparent 72%);
   --runner-orb-bg: radial-gradient(circle, rgba(194,103,68,.2), rgba(226,167,120,.1) 60%, transparent 74%);
   --runner-orb-ring: rgba(194,103,68,.3);
-  --runner-breath-glow: radial-gradient(ellipse 120% 120% at 50% 50%, transparent 42%, rgba(194,103,68,.55) 100%);
+  --runner-breath-glow: radial-gradient(ellipse 80% 80% at 50% 50%, transparent 38%, rgba(194,103,68,.9) 100%);
 
   /* Automatically computed borders - intensity can be controlled by the user by the --opaque-button-border-intensity setting */
 
@@ -317,7 +317,7 @@
   --runner-ring-glow: radial-gradient(circle, rgba(143,211,196,.16), transparent 72%);
   --runner-orb-bg: radial-gradient(circle, rgba(143,211,196,.16), transparent 72%);
   --runner-orb-ring: rgba(143,211,196,.42);
-  --runner-breath-glow: radial-gradient(ellipse 120% 120% at 50% 50%, transparent 42%, rgba(143,211,196,.5) 100%);
+  --runner-breath-glow: radial-gradient(ellipse 80% 80% at 50% 50%, transparent 38%, rgba(143,211,196,.8) 100%);
 }
 
 @layer base {

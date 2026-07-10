@@ -85,12 +85,12 @@ function playChime() {
 const KEYFRAMES = (
   <style>{`
     @keyframes fp-halo { 0%,100% { transform: scale(.9); opacity: .5; } 50% { transform: scale(1.1); opacity: .85; } }
-    @keyframes fp-breath-bg { 0%,100% { opacity: .15; } 50% { opacity: .55; } }
+    @keyframes fp-breath-bg { 0%,100% { opacity: .3; } 50% { opacity: .6; } }
     @keyframes fp-in  { 0%,44% { opacity: 1; } 54%,100% { opacity: 0; } }
     @keyframes fp-out { 0%,44% { opacity: 0; } 54%,100% { opacity: 1; } }
     @media (prefers-reduced-motion: reduce) {
       .fp-halo-pulse { animation: none !important; }
-      .fp-breath-bg { animation: none !important; opacity: .15 !important; }
+      .fp-breath-bg { animation: none !important; opacity: .3 !important; }
     }
   `}</style>
 );
@@ -280,7 +280,7 @@ export default function Runner() {
       style={{
         zIndex: -1,
         background: "var(--runner-breath-glow)",
-        opacity: 0.15,
+        opacity: 0.3,
         animation: "fp-breath-bg 8s ease-in-out infinite",
         animationPlayState: isPlaying ? "running" : "paused",
       }}
