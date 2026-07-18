@@ -430,9 +430,15 @@ export default function Runner() {
             <button
               onClick={() => setImageExpanded(true)}
               className="relative shrink-0 overflow-hidden rounded-2xl"
-              style={{ width: 72, height: 72, background: `center/cover url(${poseImage})`, boxShadow: "var(--runner-tile-shadow)", cursor: "zoom-in" }}
+              style={{ height: 72, boxShadow: "var(--runner-tile-shadow)", cursor: "zoom-in" }}
               aria-label="Expand pose image"
             >
+              <img
+                src={poseImage}
+                alt={e.pose.name}
+                className="block rounded-2xl"
+                style={{ height: 72, width: "auto", maxWidth: 140, objectFit: "contain" }}
+              />
               <div className="absolute bottom-0.5 right-0.5 p-0.5 rounded" style={{ background: "rgba(2,2,2,0.38)" }}>
                 <Maximize2 className="w-3 h-3 text-white" strokeWidth={2} />
               </div>

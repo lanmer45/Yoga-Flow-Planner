@@ -689,8 +689,8 @@ export default function Builder() {
               <div className="space-y-2">
                 <Label>Image (Optional)</Label>
                 {newPose.imageUrl ? (
-                  <div className="relative w-full aspect-video rounded-lg overflow-hidden border bg-muted">
-                    <img src={poseImageSrc(newPose.imageUrl)} alt="Pose" className="w-full h-full object-cover" />
+                  <div className="relative w-full aspect-video rounded-lg overflow-hidden border bg-muted flex items-center justify-center">
+                    <img src={poseImageSrc(newPose.imageUrl)} alt="Pose" className="h-full w-auto max-w-full object-contain" />
                     <button
                       type="button"
                       onClick={() => setNewPose({ ...newPose, imageUrl: null })}
