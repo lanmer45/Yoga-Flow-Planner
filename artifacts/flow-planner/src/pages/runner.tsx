@@ -7,7 +7,7 @@ import {
   getListSessionsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Play, Pause, SkipForward, SkipBack, X, Bell, BellOff, Check, Moon, Sun, ChevronDown } from "lucide-react";
+import { Play, Pause, SkipForward, SkipBack, X, Bell, BellOff, Check, Moon, Sun, ChevronDown, Maximize2 } from "lucide-react";
 
 // ── Flow Runner — dual theme ────────────────────────────────────────────────
 //  • dark  = "Still Water"  (1A layout: small pose tile + breathing ring timer)
@@ -86,7 +86,7 @@ const KEYFRAMES = (
   <style>{`
     @keyframes fp-halo { 0%,100% { transform: scale(.9); opacity: .5; } 50% { transform: scale(1.1); opacity: .85; } }
     @keyframes fp-breath-edge { 0%,100% { opacity: .5; } 50% { opacity: .1; } }
-    @keyframes fp-breath-core { 0%,100% { opacity: 0; } 50% { opacity: .5; } }
+    @keyframes fp-breath-core { 0%,100% { opacity: 0; } 50% { opacity: .42; } }
     @keyframes fp-in  { 0%,44% { opacity: 1; } 54%,100% { opacity: 0; } }
     @keyframes fp-out { 0%,44% { opacity: 0; } 54%,100% { opacity: 1; } }
     @media (prefers-reduced-motion: reduce) {
@@ -96,6 +96,44 @@ const KEYFRAMES = (
     }
   `}</style>
 );
+
+// Cue text that collapses to two lines with a More/Less toggle, so the practice
+// screen stays uncluttered and the caption stays legible over the breath glow.
+// Remount with key={poseIndex} to reset expansion on each new pose.
+function ExpandableCue({ text, maxWidth, opacity }: { text: string; maxWidth: number; opacity: number }) {
+  const [expanded, setExpanded] = useState(false);
+  const [clamped, setClamped] = useState(false);
+  const ref = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (el && !expanded) setClamped(el.scrollHeight > el.clientHeight + 1);
+  }, [text, expanded]);
+
+  const showToggle = clamped || expanded;
+  return (
+    <div className="flex flex-col items-center gap-1.5 shrink-0" style={{ maxWidth }}>
+      <p
+        ref={ref}
+        onClick={() => showToggle && setExpanded((v) => !v)}
+        className={`italic font-light leading-[1.55] text-[15px] text-center ${expanded ? "" : "line-clamp-2"} ${showToggle ? "cursor-pointer" : ""}`}
+        style={{ opacity }}
+      >
+        {text}
+      </p>
+      {showToggle && (
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
+          style={{ opacity: 0.5 }}
+        >
+          {expanded ? "Less" : "More"}
+          <ChevronDown className="w-3 h-3 transition-transform" style={{ transform: expanded ? "rotate(180deg)" : "none" }} />
+        </button>
+      )}
+    </div>
+  );
+}
 
 export default function Runner() {
   const params = useParams<{ id: string }>();
@@ -113,6 +151,7 @@ export default function Runner() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
   const [safetyOpen, setSafetyOpen] = useState(false);
+  const [imageExpanded, setImageExpanded] = useState(false);
 
   const queryClient = useQueryClient();
   const { mutate: createSession } = useCreateSession();
@@ -163,9 +202,10 @@ export default function Runner() {
     if (sequence.length > 0 && currentIndex < sequence.length) setTimeLeft(sequence[currentIndex].duration);
   }, [currentIndex, sequence]);
 
-  // Collapse the safety row by default on each new pose
+  // Collapse the safety row & close the image lightbox on each new pose
   useEffect(() => {
     setSafetyOpen(false);
+    setImageExpanded(false);
   }, [currentIndex]);
 
   // Timer tick
@@ -388,6 +428,32 @@ export default function Runner() {
     </div>
   );
 
+  const Lightbox = imageExpanded && poseImage ? (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-6"
+      style={{ background: "rgba(12,12,14,0.85)", backdropFilter: "blur(4px)" }}
+      onClick={() => setImageExpanded(false)}
+      role="dialog"
+      aria-modal="true"
+    >
+      <img
+        src={poseImage}
+        alt={e.pose.name}
+        className="max-w-full max-h-full object-contain rounded-2xl"
+        style={{ boxShadow: "0 24px 70px rgba(0,0,0,0.55)" }}
+        onClick={(ev) => ev.stopPropagation()}
+      />
+      <button
+        aria-label="Close image"
+        onClick={() => setImageExpanded(false)}
+        className="absolute top-5 right-5 p-2 rounded-full"
+        style={{ background: "rgba(255,255,255,0.16)", color: "#fff" }}
+      >
+        <X className="w-5 h-5" strokeWidth={1.8} />
+      </button>
+    </div>
+  ) : null;
+
   // ── DARK layout (1A · Still Water) ────────────────────────────────────────
   if (isDark) {
     return (
@@ -397,12 +463,25 @@ export default function Runner() {
         {TopBar}
         <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center text-center">
           <div className="my-auto flex flex-col items-center gap-5 py-4 w-full">
-            <div className="relative overflow-hidden shrink-0" style={{ width: 150, height: 120, borderRadius: 20, boxShadow: "var(--runner-tile-shadow)",
-                 background: poseImage ? `center/cover url(${poseImage})` : "var(--runner-tile-bg)" }}>
+            <div
+              className="relative overflow-hidden shrink-0"
+              style={{ width: 150, height: 120, borderRadius: 20, boxShadow: "var(--runner-tile-shadow)",
+                 background: poseImage ? `center/cover url(${poseImage})` : "var(--runner-tile-bg)",
+                 cursor: poseImage ? "zoom-in" : "default" }}
+              onClick={poseImage ? () => setImageExpanded(true) : undefined}
+              role={poseImage ? "button" : undefined}
+              aria-label={poseImage ? "Expand pose image" : undefined}
+              tabIndex={poseImage ? 0 : undefined}
+            >
               {!poseImage && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
                   <span className="text-[40px] font-light leading-none" style={{ color: "var(--runner-glyph-strong)" }}>{e.pose.name?.[0]}</span>
                   <span className="text-[9px] font-medium uppercase tracking-[0.18em]" style={{ color: "var(--runner-glyph-soft)" }}>{e.pose.category}</span>
+                </div>
+              )}
+              {poseImage && (
+                <div className="absolute bottom-1.5 right-1.5 p-1 rounded-md" style={{ background: "rgba(0,0,0,0.38)" }}>
+                  <Maximize2 className="w-3 h-3 text-white" strokeWidth={2} />
                 </div>
               )}
             </div>
@@ -412,11 +491,12 @@ export default function Runner() {
             </div>
             {Caption}
             {isBreaths && e.breaths && <span className="text-[11px] font-medium uppercase tracking-[0.16em]" style={{ opacity: 0.5 }}>{e.breaths} breaths</span>}
-            {e.pose.cue && <p className="italic font-light leading-[1.55] text-[15px]" style={{ maxWidth: 280, opacity: 0.8 }}>{e.pose.cue}</p>}
+            {e.pose.cue && <ExpandableCue key={currentIndex} text={e.pose.cue} maxWidth={280} opacity={0.8} />}
           </div>
         </div>
         {Safety}
         {Controls}
+        {Lightbox}
       </div>
     );
   }
@@ -429,8 +509,16 @@ export default function Runner() {
       {TopBar}
       <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center gap-4 text-center py-4">
         {/* large pose card with name overlay */}
-        <div className="relative overflow-hidden shrink-0" style={{ width: 168, height: 134, borderRadius: 22, boxShadow: "var(--runner-tile-shadow)",
-             background: poseImage ? `center/cover url(${poseImage})` : "var(--runner-tile-bg)" }}>
+        <div
+          className="relative overflow-hidden shrink-0"
+          style={{ width: 168, height: 134, borderRadius: 22, boxShadow: "var(--runner-tile-shadow)",
+             background: poseImage ? `center/cover url(${poseImage})` : "var(--runner-tile-bg)",
+             cursor: poseImage ? "zoom-in" : "default" }}
+          onClick={poseImage ? () => setImageExpanded(true) : undefined}
+          role={poseImage ? "button" : undefined}
+          aria-label={poseImage ? "Expand pose image" : undefined}
+          tabIndex={poseImage ? 0 : undefined}
+        >
           {!poseImage && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
               <span className="text-[42px] font-light leading-none" style={{ color: "var(--runner-glyph-strong)" }}>{e.pose.name?.[0]}</span>
@@ -438,14 +526,20 @@ export default function Runner() {
             </div>
           )}
           {e.side && <span className="absolute top-2.5 left-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] px-2 py-0.5 rounded-full" style={{ background: "var(--runner-side-badge-bg)", color: "var(--runner-side-badge-text)" }}>{e.side}</span>}
+          {poseImage && (
+            <div className="absolute bottom-2 right-2 p-1 rounded-md" style={{ background: "rgba(0,0,0,0.38)" }}>
+              <Maximize2 className="w-3.5 h-3.5 text-white" strokeWidth={2} />
+            </div>
+          )}
         </div>
         <h2 className="text-[26px] font-normal leading-[1.12] shrink-0" style={{ color: "var(--runner-heading)" }}>{e.pose.name}</h2>
         {Caption}
         {isBreaths && e.breaths && <span className="text-[11px] font-medium uppercase tracking-[0.16em]" style={{ opacity: 0.45 }}>{e.breaths} breaths</span>}
-        {e.pose.cue && <p className="italic font-light leading-[1.55] text-[15px]" style={{ maxWidth: 290, opacity: 0.78 }}>{e.pose.cue}</p>}
+        {e.pose.cue && <ExpandableCue key={currentIndex} text={e.pose.cue} maxWidth={290} opacity={0.78} />}
       </div>
       {Safety}
       {Controls}
+      {Lightbox}
     </div>
   );
 }
