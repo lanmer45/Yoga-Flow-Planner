@@ -7,11 +7,10 @@ import {
   getListSessionsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Play, Pause, SkipForward, SkipBack, X, Bell, BellOff, Check, Moon, Sun, ChevronDown, Maximize2 } from "lucide-react";
+import { Play, Pause, SkipForward, SkipBack, X, Bell, BellOff, Check, Moon, Sun, Maximize2 } from "lucide-react";
 
-// ── Flow Runner — dual theme ────────────────────────────────────────────────
-//  • dark  = "Still Water"  (1A layout: small pose tile + breathing ring timer)
-//  • light = "Warm Studio"  (1B layout: large pose card + breathing orb timer)
+// ── Flow Runner — single shared layout, dual theme via --runner-* tokens ────
+// One 100dvh flex column with three anchored zones (top / middle / bottom).
 // Colors live in index.css as --runner-* tokens; the top-bar toggle flips the
 // app-wide .dark class on <html>, same as the rest of the app.
 
@@ -97,44 +96,6 @@ const KEYFRAMES = (
   `}</style>
 );
 
-// Cue text that collapses to two lines with a More/Less toggle, so the practice
-// screen stays uncluttered and the caption stays legible over the breath glow.
-// Remount with key={poseIndex} to reset expansion on each new pose.
-function ExpandableCue({ text, maxWidth, opacity }: { text: string; maxWidth: number; opacity: number }) {
-  const [expanded, setExpanded] = useState(false);
-  const [clamped, setClamped] = useState(false);
-  const ref = useRef<HTMLParagraphElement>(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (el && !expanded) setClamped(el.scrollHeight > el.clientHeight + 1);
-  }, [text, expanded]);
-
-  const showToggle = clamped || expanded;
-  return (
-    <div className="flex flex-col items-center gap-1.5 shrink-0" style={{ maxWidth }}>
-      <p
-        ref={ref}
-        onClick={() => showToggle && setExpanded((v) => !v)}
-        className={`italic font-light leading-[1.55] text-[15px] text-center ${expanded ? "" : "line-clamp-2"} ${showToggle ? "cursor-pointer" : ""}`}
-        style={{ opacity }}
-      >
-        {text}
-      </p>
-      {showToggle && (
-        <button
-          onClick={() => setExpanded((v) => !v)}
-          className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
-          style={{ opacity: 0.5 }}
-        >
-          {expanded ? "Less" : "More"}
-          <ChevronDown className="w-3 h-3 transition-transform" style={{ transform: expanded ? "rotate(180deg)" : "none" }} />
-        </button>
-      )}
-    </div>
-  );
-}
-
 export default function Runner() {
   const params = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
@@ -150,7 +111,6 @@ export default function Runner() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
-  const [safetyOpen, setSafetyOpen] = useState(false);
   const [imageExpanded, setImageExpanded] = useState(false);
 
   const queryClient = useQueryClient();
@@ -202,9 +162,8 @@ export default function Runner() {
     if (sequence.length > 0 && currentIndex < sequence.length) setTimeLeft(sequence[currentIndex].duration);
   }, [currentIndex, sequence]);
 
-  // Collapse the safety row & close the image lightbox on each new pose
+  // Close the image lightbox on each new pose
   useEffect(() => {
-    setSafetyOpen(false);
     setImageExpanded(false);
   }, [currentIndex]);
 
@@ -297,7 +256,6 @@ export default function Runner() {
   }
 
   const e = sequence[currentIndex];
-  const pct = (currentIndex / sequence.length) * 100;
   const isBreaths = e.pose.durationType === "breaths";
   const mmss = `${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, "0")}`;
   const safetyHasCautions = (e.pose.cautions?.length ?? 0) > 0;
@@ -309,6 +267,8 @@ export default function Runner() {
   const RING_R = (RING_SIZE - RING_STROKE) / 2;
   const RING_C = 2 * Math.PI * RING_R;
   const remainingFrac = e.duration > 0 ? Math.max(0, Math.min(1, timeLeft / e.duration)) : 0;
+  // Fill the flow progress bar continuously — including during the final pose.
+  const pct = Math.max(0, Math.min(100, ((currentIndex + 1 - remainingFrac) / sequence.length) * 100));
   const rawPoseImage: string | undefined = (e.pose as any).imageUrl ?? undefined;
   const poseImage: string | undefined = rawPoseImage
     ? (/^https?:\/\//.test(rawPoseImage) ? rawPoseImage : `/api/storage${rawPoseImage}`)
@@ -368,8 +328,10 @@ export default function Runner() {
     </div>
   );
 
+  // Safety — always expanded. Cautions stay compact pills (1-2 words); the
+  // modification & chair sentences render as plain left-aligned text lines.
   const Safety = hasSafety ? (
-    <div className="flex flex-col items-center gap-1.5 mb-3 shrink-0">
+    <div className="flex flex-col items-stretch gap-2 w-full" style={{ maxWidth: 320 }}>
       {safetyHasCautions && (
         <div className="flex flex-wrap gap-1.5 justify-center">
           {e.pose.cautions?.map((c: string) => (
@@ -378,16 +340,16 @@ export default function Runner() {
         </div>
       )}
       {safetyHasDetails && (
-        <div className="flex flex-col items-center gap-1.5">
-          <button onClick={() => setSafetyOpen((o) => !o)} aria-expanded={safetyOpen} className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--runner-text)", opacity: 0.6 }}>
-            Safety
-            <ChevronDown className="w-3.5 h-3.5 transition-transform" style={{ transform: safetyOpen ? "rotate(180deg)" : "none" }} />
-          </button>
-          {safetyOpen && (
-            <div className="flex flex-wrap gap-1.5 justify-center">
-              {e.pose.modification && <span className="text-[10.5px] font-medium px-2.5 py-[5px] rounded-lg" style={{ background: "var(--runner-chip-bg)", color: "var(--runner-chip-text)", border: "var(--runner-chip-border)" }}>Mod · {e.pose.modification}</span>}
-              {e.pose.chairOption && <span className="text-[10.5px] font-medium px-2.5 py-[5px] rounded-lg" style={{ background: "var(--runner-chip-bg)", color: "var(--runner-chip-text)", border: "var(--runner-chip-border)" }}>Chair · {e.pose.chairOption}</span>}
-            </div>
+        <div className="flex flex-col gap-1 text-left">
+          {e.pose.modification && (
+            <p className="text-[13.5px] leading-[1.4]" style={{ color: "var(--runner-text)", opacity: 0.85 }}>
+              <span className="font-bold">Mod — </span>{e.pose.modification}
+            </p>
+          )}
+          {e.pose.chairOption && (
+            <p className="text-[13.5px] leading-[1.4]" style={{ color: "var(--runner-text)", opacity: 0.85 }}>
+              <span className="font-bold">Chair — </span>{e.pose.chairOption}
+            </p>
           )}
         </div>
       )}
@@ -396,7 +358,7 @@ export default function Runner() {
 
   const Controls = (
     <div className="flex flex-col gap-3 shrink-0">
-      <div className="text-center text-[15px] font-light tabular-nums leading-none" style={{ color: "var(--runner-timer-color)" }}>{mmss}</div>
+      <div className="text-center text-[40px] font-light tabular-nums leading-none" style={{ color: "var(--runner-timer-color)" }}>{mmss}</div>
       <div className="flex items-center justify-center gap-9">
         <button aria-label="Previous pose" onClick={handleSkipBack} disabled={currentIndex === 0} className="p-2 opacity-60 disabled:opacity-25 transition-opacity">
           <SkipBack className="fill-current" style={{ width: 26, height: 26 }} />
@@ -454,90 +416,54 @@ export default function Runner() {
     </div>
   ) : null;
 
-  // ── DARK layout (1A · Still Water) ────────────────────────────────────────
-  if (isDark) {
-    return (
-      <div className="fixed inset-x-0 top-0 overflow-hidden flex flex-col px-6 pt-7 pb-8" style={rootStyle}>
-        {KEYFRAMES}
-        {BreathGlow}
-        {TopBar}
-        <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center text-center">
-          <div className="my-auto flex flex-col items-center gap-5 py-4 w-full">
-            <div
-              className="relative overflow-hidden shrink-0"
-              style={{ width: 150, height: 120, borderRadius: 20, boxShadow: "var(--runner-tile-shadow)",
-                 background: poseImage ? `center/cover url(${poseImage})` : "var(--runner-tile-bg)",
-                 cursor: poseImage ? "zoom-in" : "default" }}
-              onClick={poseImage ? () => setImageExpanded(true) : undefined}
-              role={poseImage ? "button" : undefined}
-              aria-label={poseImage ? "Expand pose image" : undefined}
-              tabIndex={poseImage ? 0 : undefined}
-            >
-              {!poseImage && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
-                  <span className="text-[40px] font-light leading-none" style={{ color: "var(--runner-glyph-strong)" }}>{e.pose.name?.[0]}</span>
-                  <span className="text-[9px] font-medium uppercase tracking-[0.18em]" style={{ color: "var(--runner-glyph-soft)" }}>{e.pose.category}</span>
-                </div>
-              )}
-              {poseImage && (
-                <div className="absolute bottom-1.5 right-1.5 p-1 rounded-md" style={{ background: "rgba(2,2,2,0.38)" }}>
-                  <Maximize2 className="w-3 h-3 text-white" strokeWidth={2} />
-                </div>
-              )}
-            </div>
-            <div className="flex flex-col items-center gap-2.5">
-              <h2 className="text-[30px] font-light leading-[1.15]">{e.pose.name}</h2>
-              {e.side && <span className="text-[11px] font-semibold uppercase tracking-[0.22em] px-3 py-[5px] rounded-full" style={{ background: "var(--runner-side-badge-bg)", color: "var(--runner-side-badge-text)" }}>{e.side}</span>}
-            </div>
-            {Caption}
-            {isBreaths && e.breaths && <span className="text-[11px] font-medium uppercase tracking-[0.16em]" style={{ opacity: 0.5 }}>{e.breaths} breaths</span>}
-            {e.pose.cue && <ExpandableCue key={currentIndex} text={e.pose.cue} maxWidth={280} opacity={0.8} />}
-          </div>
-        </div>
-        {Safety}
-        {Controls}
-        {Lightbox}
-      </div>
-    );
-  }
-
-  // ── LIGHT layout (1B · Warm Studio) ───────────────────────────────────────
+  // ── Unified layout — three anchored zones (colors from --runner-* tokens) ──
   return (
-    <div className="fixed inset-x-0 top-0 overflow-hidden flex flex-col px-6 pt-6 pb-8" style={rootStyle}>
+    <div className="fixed inset-x-0 top-0 overflow-hidden flex flex-col px-6 pt-7 pb-8" style={rootStyle}>
       {KEYFRAMES}
       {BreathGlow}
-      {TopBar}
-      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center gap-4 text-center py-4">
-        {/* large pose card with name overlay */}
-        <div
-          className="relative overflow-hidden shrink-0"
-          style={{ width: 168, height: 134, borderRadius: 22, boxShadow: "var(--runner-tile-shadow)",
-             background: poseImage ? `center/cover url(${poseImage})` : "var(--runner-tile-bg)",
-             cursor: poseImage ? "zoom-in" : "default" }}
-          onClick={poseImage ? () => setImageExpanded(true) : undefined}
-          role={poseImage ? "button" : undefined}
-          aria-label={poseImage ? "Expand pose image" : undefined}
-          tabIndex={poseImage ? 0 : undefined}
-        >
-          {!poseImage && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
-              <span className="text-[42px] font-light leading-none" style={{ color: "var(--runner-glyph-strong)" }}>{e.pose.name?.[0]}</span>
-              <span className="text-[9px] font-medium uppercase tracking-[0.18em]" style={{ color: "var(--runner-glyph-soft)" }}>{e.pose.category}</span>
-            </div>
-          )}
-          {e.side && <span className="absolute top-2.5 left-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] px-2 py-0.5 rounded-full" style={{ background: "var(--runner-side-badge-bg)", color: "var(--runner-side-badge-text)" }}>{e.side}</span>}
+
+      {/* TOP ZONE — anchored: top bar + pose name (with optional thumbnail & side badge) */}
+      <div className="shrink-0 flex flex-col gap-4">
+        {TopBar}
+        <div className="flex items-center gap-3.5">
           {poseImage && (
-            <div className="absolute bottom-2 right-2 p-1 rounded-md" style={{ background: "rgba(2,2,2,0.38)" }}>
-              <Maximize2 className="w-3.5 h-3.5 text-white" strokeWidth={2} />
-            </div>
+            <button
+              onClick={() => setImageExpanded(true)}
+              className="relative shrink-0 overflow-hidden rounded-2xl"
+              style={{ width: 72, height: 72, background: `center/cover url(${poseImage})`, boxShadow: "var(--runner-tile-shadow)", cursor: "zoom-in" }}
+              aria-label="Expand pose image"
+            >
+              <div className="absolute bottom-0.5 right-0.5 p-0.5 rounded" style={{ background: "rgba(2,2,2,0.38)" }}>
+                <Maximize2 className="w-3 h-3 text-white" strokeWidth={2} />
+              </div>
+            </button>
           )}
+          <div className="flex flex-col gap-1.5 min-w-0">
+            <h2 className="text-[28px] font-light leading-[1.12]" style={{ color: "var(--runner-heading)" }}>{e.pose.name}</h2>
+            {e.side && (
+              <span className="self-start text-[11px] font-semibold uppercase tracking-[0.2em] px-2.5 py-1 rounded-full" style={{ background: "var(--runner-side-badge-bg)", color: "var(--runner-side-badge-text)" }}>{e.side}</span>
+            )}
+          </div>
         </div>
-        <h2 className="text-[26px] font-normal leading-[1.12] shrink-0" style={{ color: "var(--runner-heading)" }}>{e.pose.name}</h2>
-        {Caption}
-        {isBreaths && e.breaths && <span className="text-[11px] font-medium uppercase tracking-[0.16em]" style={{ opacity: 0.45 }}>{e.breaths} breaths</span>}
-        {e.pose.cue && <ExpandableCue key={currentIndex} text={e.pose.cue} maxWidth={290} opacity={0.78} />}
       </div>
-      {Safety}
+
+      {/* MIDDLE ZONE — flex-1, scrollable, content vertically centered */}
+      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center">
+        <div className="my-auto w-full flex flex-col items-center gap-4 py-5 text-center">
+          <div className="flex flex-col items-center gap-1.5">
+            {Caption}
+            {isBreaths && e.breaths && (
+              <span className="text-[11px] font-medium uppercase tracking-[0.16em]" style={{ opacity: 0.5 }}>{e.breaths} breaths</span>
+            )}
+          </div>
+          {e.pose.cue && (
+            <p className="font-normal" style={{ fontSize: 17.5, lineHeight: 1.5, opacity: 0.92, maxWidth: 320, color: "var(--runner-text)" }}>{e.pose.cue}</p>
+          )}
+          {Safety}
+        </div>
+      </div>
+
+      {/* BOTTOM ZONE — anchored: timer + controls + progress */}
       {Controls}
       {Lightbox}
     </div>

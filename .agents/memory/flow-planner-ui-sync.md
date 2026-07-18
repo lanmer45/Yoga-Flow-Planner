@@ -10,10 +10,13 @@ shared field or shared layout element must be applied to BOTH, or they silently 
 - Pose editor dialog exists twice: `pages/poses.tsx` and `pages/builder.tsx`. Any pose
   field (add/edit/reset/save) must be mirrored in both. builder.tsx also keeps a JSON
   snapshot dirty-check in openCreatePose/openEditPose that must include new fields.
-- The Runner (`pages/runner.tsx`) has two full return branches — dark ("Still Water")
-  and light ("Warm Studio"). They share the `TopBar`/`Safety`/`Controls`/`Caption`
-  fragments, but the middle content (pose card sizes, name/heading sizes) is duplicated
-  per branch. Any layout change to the middle must be made in both branches.
+- The Runner (`pages/runner.tsx`) uses ONE shared layout (a single return) — a 100dvh
+  three-zone flex column (top / middle / bottom), built from the `TopBar` / `Caption` /
+  `Safety` / `Controls` / `Lightbox` fragments. Theme is switched purely via `--runner-*`
+  CSS tokens in `index.css` (the top-bar toggle flips the `.dark` class); the JSX no
+  longer branches on `isDark` for layout. So a layout change is made once — but any
+  COLOR must be set in both the light AND dark `--runner-*` token blocks, and verified
+  in both themes.
 
 **Why:** These duplications are easy to miss — a change that works in one theme/dialog
 can look broken in the other, and a snapshot dirty-check that omits a field breaks

@@ -291,7 +291,7 @@
   --shadow-2xl: 0px 2px 0px 0px 0 0% 0% / 0.5;
 
   /* Flow Runner — Still Water (dark) · palette-only: navy #00205c / blue #00558c depths, white moonlight */
-  --runner-bg: radial-gradient(135% 80% at 50% -8%, #00558c 0%, #00205c 45%, #020202 100%);
+  --runner-bg: radial-gradient(135% 80% at 50% -8%, #00558c 0%, #00205c 60%);
   --runner-text: #ffffff;
   --runner-accent: #ffffff;
   --runner-play-bg: #ffffff;
@@ -318,7 +318,7 @@
   --runner-ring-glow: radial-gradient(circle, rgba(255,255,255,.16), transparent 72%);
   --runner-orb-bg: radial-gradient(circle, rgba(255,255,255,.16), transparent 72%);
   --runner-orb-ring: rgba(255,255,255,.42);
-  --runner-breath-glow: radial-gradient(ellipse 80% 80% at 50% 50%, transparent 38%, rgba(255,255,255,.45) 100%);
+  --runner-breath-glow: radial-gradient(ellipse 90% 90% at 50% 50%, transparent 55%, rgba(255,255,255,.28) 100%);
   --runner-breath-core: radial-gradient(62% 48% at 50% 50%, rgba(0,85,140,.5) 0%, transparent 100%);
 }
 

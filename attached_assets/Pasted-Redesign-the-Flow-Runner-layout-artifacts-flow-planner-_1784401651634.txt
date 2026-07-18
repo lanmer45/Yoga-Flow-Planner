@@ -1,0 +1,62 @@
+Redesign the Flow Runner layout (artifacts/flow-planner/src/pages/runner.tsx) to fix
+mobile usability. The current screen truncates the pose instructions, hides safety
+modifications, and overlaps text in dark mode. Keep all existing behavior (timer,
+chime, wake lock, per-side splitting, session save, lightbox, theme toggle) — this
+is a layout/presentation change only.
+
+STRUCTURE — replace the two separate dark/light layouts with ONE shared layout
+(colors already come from --runner-* CSS tokens, so only structure needs unifying).
+Three vertical zones on a 100dvh flex column:
+
+1. TOP ZONE (anchored, shrink-0):
+   - Keep the existing top bar (close X, section name, theme toggle, bell).
+   - Below it: pose name (keep ~28-30px) with the side badge ("Right side"/"Left
+     side") next to or under it.
+   - REMOVE the large 150x120 / 168x134 pose tile. If the pose has an image, show
+     a small 72px rounded thumbnail beside the pose name that opens the existing
+     lightbox on tap. Poses without images get no tile at all — no letter
+     placeholder.
+
+2. MIDDLE ZONE (flex-1, min-h-0, overflow-y-auto, content vertically centered):
+   - The pose cue, ALWAYS shown in full — delete the ExpandableCue 2-line clamp
+     and the More/Less toggle entirely. Style: NOT italic, 17-18px, line-height
+     ~1.5, opacity 0.92, centered, max-width ~320px.
+   - Keep the animated Inhale/Exhale caption and "N breaths" label above the cue,
+     but they are decorative — if vertical space is ever tight they should shrink,
+     never the cue.
+   - Safety block below the cue:
+     • Caution chips stay as compact pills (they're 1-2 words).
+     • Modification and Chair option are full sentences — render them as plain
+       left-aligned text lines (13-14px, ~85% opacity) with a short bold prefix
+       ("Mod —", "Chair —"), NOT inside pill chips.
+     • If the pose has any caution OR modification OR chair option, show the
+       whole safety block expanded by default. Remove the collapsed-by-default
+       "SAFETY ˅" toggle and the effect that re-collapses it on every pose change.
+       (Keeping a toggle to hide it is fine, but default = open.)
+
+3. BOTTOM ZONE (anchored, shrink-0 — must NOT move or resize between poses):
+   - Large countdown timer: 40px, tabular-nums, full opacity, directly above the
+     controls.
+   - Keep the play/pause button with its progress ring, and the skip back/next
+     buttons.
+   - Keep the "Pose X / Y" + "N min flow" row and the linear progress bar. Fix the
+     progress fraction to (currentIndex + 1 - remainingFrac) / sequence.length so
+     the bar fills during the last pose instead of stopping short.
+
+DARK MODE READABILITY:
+   - In index.css, cap the dark --runner-bg gradient's darkest stop around #10203a
+     instead of #020202, and reduce the dark --runner-breath-glow edge vignette
+     so it never sits over the middle text zone at more than ~15% opacity. Body
+     text in the middle zone must always render at effective contrast of white on
+     navy — never faded by an overlay.
+   - The BreathGlow layers must keep pointer-events: none and stay behind text.
+
+ACCEPTANCE CHECK (test at iPhone viewport 390x844, both themes, with the
+"Standing Strong (Energizing)" routine):
+   - Full cue text visible for every pose with no More button and no truncation.
+   - For Standing Side Bend: the Caution chip, the Mod line, and the Chair line
+     are all readable immediately without any tap.
+   - Timer readable at a glance; controls in the exact same screen position on
+     every pose.
+   - No text overlapped by chips, gradients, or vignettes in dark mode.
+   - Nothing in the middle zone is italic or below 13px.
