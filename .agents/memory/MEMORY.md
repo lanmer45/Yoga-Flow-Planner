@@ -3,3 +3,4 @@
 - [Playwright E2E on NixOS](playwright-on-nixos.md) — bundled browser can't launch (missing libglib); use nix chromium via executablePath; run `pnpm --filter @workspace/flow-planner test:e2e`.
 - [Flow Planner duplicated UI](flow-planner-ui-sync.md) — pose dialog lives in poses.tsx AND builder.tsx (mirror field changes); Runner is ONE shared layout, theme via --runner-* tokens so colors go in both light+dark blocks.
 - [Object storage in flow-planner](object-storage-flow-planner.md) — pose-image uploads use presigned-URL flow; store objectPath, serve via `/api/storage${path}`; no pnpm $react override.
+- [Flow Planner chime / mobile audio](flow-planner-audio.md) — Web Audio chime; iOS mute switch silences it unless navigator.audioSession.type='playback' + silent-buffer unlock in gesture; playback pauses user's bg music (transient is the mixing alternative).

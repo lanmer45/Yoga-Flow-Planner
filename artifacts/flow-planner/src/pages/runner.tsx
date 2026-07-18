@@ -30,10 +30,36 @@ function getAudioCtx(): AudioContext | null {
   }
 }
 
-// Call inside a user gesture to unlock audio on mobile.
+// iOS silences Web Audio whenever the physical ring/silent switch is on — even
+// with the volume turned all the way up. Declaring a "playback" audio session
+// (Safari 16.4+) tells the OS this is primary media, so the chime is audible
+// regardless of the mute switch, exactly like a music or video app.
+function primeAudioSession() {
+  try {
+    const audioSession = (navigator as any).audioSession;
+    if (audioSession && audioSession.type !== "playback") audioSession.type = "playback";
+  } catch {
+    // audioSession unsupported (non-Safari) — nothing to do.
+  }
+}
+
+// Call inside a user gesture (e.g. tapping Play) to unlock audio on mobile.
 function unlockAudio() {
+  primeAudioSession();
   const ctx = getAudioCtx();
-  if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {});
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  // Some iOS versions only fully unlock the context after an actual sound is
+  // started inside the gesture, so play a one-sample silent buffer.
+  try {
+    const buffer = ctx.createBuffer(1, 1, 22050);
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.connect(ctx.destination);
+    src.start(0);
+  } catch {
+    // Ignore — resume() above is enough on most browsers.
+  }
 }
 
 // Short gong synth — a bright, sustained metallic strike that rings out and decays
