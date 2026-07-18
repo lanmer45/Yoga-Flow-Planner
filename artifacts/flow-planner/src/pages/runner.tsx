@@ -431,7 +431,7 @@ export default function Runner() {
   const Lightbox = imageExpanded && poseImage ? (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-6"
-      style={{ background: "rgba(12,12,14,0.85)", backdropFilter: "blur(4px)" }}
+      style={{ background: "rgba(2,2,2,0.85)", backdropFilter: "blur(4px)" }}
       onClick={() => setImageExpanded(false)}
       role="dialog"
       aria-modal="true"
@@ -440,7 +440,7 @@ export default function Runner() {
         src={poseImage}
         alt={e.pose.name}
         className="max-w-full max-h-full object-contain rounded-2xl"
-        style={{ boxShadow: "0 24px 70px rgba(0,0,0,0.55)" }}
+        style={{ boxShadow: "0 24px 70px rgba(2,2,2,0.55)" }}
         onClick={(ev) => ev.stopPropagation()}
       />
       <button
@@ -480,7 +480,7 @@ export default function Runner() {
                 </div>
               )}
               {poseImage && (
-                <div className="absolute bottom-1.5 right-1.5 p-1 rounded-md" style={{ background: "rgba(0,0,0,0.38)" }}>
+                <div className="absolute bottom-1.5 right-1.5 p-1 rounded-md" style={{ background: "rgba(2,2,2,0.38)" }}>
                   <Maximize2 className="w-3 h-3 text-white" strokeWidth={2} />
                 </div>
               )}
@@ -527,7 +527,7 @@ export default function Runner() {
           )}
           {e.side && <span className="absolute top-2.5 left-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] px-2 py-0.5 rounded-full" style={{ background: "var(--runner-side-badge-bg)", color: "var(--runner-side-badge-text)" }}>{e.side}</span>}
           {poseImage && (
-            <div className="absolute bottom-2 right-2 p-1 rounded-md" style={{ background: "rgba(0,0,0,0.38)" }}>
+            <div className="absolute bottom-2 right-2 p-1 rounded-md" style={{ background: "rgba(2,2,2,0.38)" }}>
               <Maximize2 className="w-3.5 h-3.5 text-white" strokeWidth={2} />
             </div>
           )}
