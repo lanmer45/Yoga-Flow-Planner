@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTitle, DialogHeader } from "@/components/ui/dialog";
-import { Search, ChevronLeft } from "lucide-react";
+import { Search, ChevronLeft, PersonStanding, ShieldAlert, Pencil } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -182,44 +182,53 @@ export default function Poses() {
         </div>
       </div>
 
-      <div className="space-y-2">
-        {isLoading ? (
-          <div className="text-center py-12 text-muted-foreground">Loading poses...</div>
-        ) : filtered?.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">No poses match your filters.</div>
-        ) : (
-          filtered?.map((pose) => (
-            <div key={pose.id} className="p-3 border rounded-lg bg-card">
-              <div className="flex justify-between items-start gap-2">
-                <div className="font-medium text-foreground">{pose.name}</div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Badge variant="outline" className="text-[10px]">{pose.category}</Badge>
-                  <button
-                    onClick={() => openEdit(pose)}
-                    className="text-[11px] font-medium text-secondary hover:underline"
-                  >
-                    Edit
-                  </button>
-                </div>
+      {isLoading ? (
+        <div className="text-center py-12 text-muted-foreground">Loading poses...</div>
+      ) : filtered?.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">No poses match your filters.</div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          {filtered?.map((pose) => (
+            <button
+              key={pose.id}
+              type="button"
+              onClick={() => openEdit(pose)}
+              className="group text-left rounded-xl border border-border/60 bg-card overflow-hidden flex flex-col focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-shadow hover:shadow-md"
+            >
+              <div className="relative aspect-[3/4] bg-muted overflow-hidden">
+                {pose.imageUrl ? (
+                  <img
+                    src={imageSrc(pose.imageUrl)}
+                    alt={pose.name}
+                    loading="lazy"
+                    className="absolute inset-0 h-full w-full object-contain"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/30">
+                    <PersonStanding className="w-12 h-12" strokeWidth={1.2} />
+                  </div>
+                )}
+                <Badge className="absolute top-1.5 left-1.5 text-[9px] font-normal px-1.5 py-0 bg-background/85 backdrop-blur-sm text-foreground border-transparent">
+                  {pose.category}
+                </Badge>
+                {pose.cautions.length > 0 && (
+                  <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 rounded-full bg-destructive/90 text-destructive-foreground px-1.5 py-0.5 text-[9px] font-medium">
+                    <ShieldAlert className="w-2.5 h-2.5" strokeWidth={2} />
+                    {pose.cautions.length}
+                  </div>
+                )}
               </div>
-              {pose.cue && <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{pose.cue}</div>}
-              {pose.modification && (
-                <div className="text-[11px] text-muted-foreground mt-1"><span className="font-medium text-foreground/70">Mod:</span> {pose.modification}</div>
-              )}
-              {pose.chairOption && (
-                <div className="text-[11px] text-muted-foreground"><span className="font-medium text-foreground/70">Chair:</span> {pose.chairOption}</div>
-              )}
-              {pose.cautions.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {pose.cautions.map((c: string) => (
-                    <span key={c} className="text-[10px] bg-destructive/10 text-destructive px-1 rounded">{c}</span>
-                  ))}
+              <div className="p-2 flex-1 flex flex-col">
+                <div className="flex items-start justify-between gap-1">
+                  <div className="text-sm font-medium text-foreground leading-tight line-clamp-2">{pose.name}</div>
+                  <Pencil className="w-3 h-3 mt-0.5 shrink-0 text-muted-foreground/50 group-hover:text-primary" strokeWidth={1.8} />
                 </div>
-              )}
-            </div>
-          ))
-        )}
-      </div>
+                {pose.cue && <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{pose.cue}</div>}
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
 
       <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
         <DialogContent className="max-h-[90vh] overflow-hidden flex flex-col p-0">
